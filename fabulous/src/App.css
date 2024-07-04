@@ -47,6 +47,11 @@
 }
 
 .hint:hover {
-  color: #646cff;
+  color: #747bff;
   text-decoration: underline;
+}
+
+.hint a {
+  font-size: 0.8em;
+  color: #747bff !important; /* Example color */
 }
