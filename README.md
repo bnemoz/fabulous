@@ -6,8 +6,8 @@ A WebApp for Antibody Research
 - ... more to come!
 
 ## fabulous
-fabulous is a React + Vite web App hosting all the beautiful designs together. It makes the whole application available online
+**fabulous** is a React + Vite web App hosting all the beautiful designs together. It makes the whole application available online
 
 ## absolute
-absolute is the python engine in charge of handling your precious antibodies
+**absolute** is the python engine in charge of handling your precious antibodies
 
