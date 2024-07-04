@@ -37,6 +37,16 @@
   padding: 2em;
 }
 
-.read-the-docs {
+.footer {
   color: #888;
+}
+
+.hint {
+  font-size: 0.8em;
+  color: #888;
+}
+
+.hint:hover {
+  color: #646cff;
+  text-decoration: underline;
 }
