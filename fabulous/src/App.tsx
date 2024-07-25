@@ -26,18 +26,16 @@ function App() {
     setSearchPerformed(true);
   };
 
-  const fetchAPI = async () => {
-    const response = await axios.get("http://localhost:5000/api?sequence="+AbSequence);
+  const fetchAPI = async () => { if (searchPerformed) {
+    const response = await axios.get("http://antibody.bnemoz.com/api?sequence="+AbSequence);
     setAbDict(response.data);
-  }
+  }}
 
-
+  useEffect(() => {
+    fetchAPI();
+  })
 
   if (searchPerformed) {
-
-    useEffect(() => {
-      fetchAPI();
-    })
 
     return (
       <>
@@ -66,9 +64,9 @@ function App() {
         </Box>
 
         <Box sx={{height: 200, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Ab dictionary
-          {abdict.map((item, index) => (
+          {/* {abdict.map((item, index) => (
             <p key={index}>{item}</p>
-          ))}
+          ))} */}
         </Box>
       </>
     );

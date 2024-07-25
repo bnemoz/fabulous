@@ -3,7 +3,7 @@ from flask_cors import CORS
 import abstar
 
 app = Flask(__name__)
-cors = CORS(app, origins=['*'])
+cors = CORS(app, origins=['*'], )
 
 @app.route('/api/antibody', methods=['GET', 'POST'])
 def main():
