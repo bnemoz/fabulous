@@ -8,11 +8,8 @@ cors = CORS(app, origins=['*'], )
 @app.route('/api/antibody/', methods=['GET', 'POST'])
 def main():
     sequence = request.args.get('sequence')
-    return jsonify(
-        {
-        abstar.run(sequence, verbose=False)
-        }
-    )
+    ab_json = abstar.run(sequence, verbose=False)
+    return ab_json
 
 if __name__ == '__main__':
     app.run(debug=True, port=8282)
