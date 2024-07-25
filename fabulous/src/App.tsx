@@ -15,7 +15,7 @@ function App() {
   const [AbSequence, setAbSequence] = useState('');
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [Species, setSpecies] = useState('human');
-  const [abdict, setAbDict] = useState([]);
+  const [antibodydict, setAbDict] = useState([]);
 
   const handleLinkClick = () => {
     setAbSequence('>Test_Antibody\nEGQLLESGGGLAQPGGSLRLSCTASGFTFSKNAMNWVRQAPGKRLEWVAGIIGNGSDTYYADSVKGRFTISRDNSKNTVSLQMNSLRAEDSAIYYCAKDRHPWRWLQLFDSWGQGTLVTVSS');
@@ -26,8 +26,8 @@ function App() {
     setSearchPerformed(true);
   };
 
-  const fetchAPI = async () => { if (searchPerformed) {
-    const response = await axios.get("http://antibody.bnemoz.com/api?sequence="+AbSequence);
+  const fetchAPI = async () => { if (searchPerformed) if (AbSequence) {
+    const response = await axios.get("http://localhost:8282/api?sequence="+AbSequence);
     setAbDict(response.data);
   }}
 
@@ -64,6 +64,7 @@ function App() {
         </Box>
 
         <Box sx={{height: 200, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Ab dictionary
+          {antibodydict}
           {/* {abdict.map((item, index) => (
             <p key={index}>{item}</p>
           ))} */}
