@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/joy/Box';
 import Button from '@mui/joy/Button';
 import Textarea from '@mui/joy/Textarea';
@@ -8,13 +8,14 @@ import './App.css';
 import { Stack } from '@mui/joy';
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
+import axios from 'axios';
 
 function App() {
 
   const [AbSequence, setAbSequence] = useState('');
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [Species, setSpecies] = useState('human');
-
+  const [abdict, setAbDict] = useState([]);
 
   const handleLinkClick = () => {
     setAbSequence('>Test_Antibody\nEGQLLESGGGLAQPGGSLRLSCTASGFTFSKNAMNWVRQAPGKRLEWVAGIIGNGSDTYYADSVKGRFTISRDNSKNTVSLQMNSLRAEDSAIYYCAKDRHPWRWLQLFDSWGQGTLVTVSS');
@@ -25,8 +26,19 @@ function App() {
     setSearchPerformed(true);
   };
 
+  const fetchAPI = async () => {
+    const response = await axios.get("http://localhost:8282/api/antibody?sequence="+AbSequence);
+    setAbDict(response.data);
+  }
+
+
 
   if (searchPerformed) {
+
+    useEffect(() => {
+      fetchAPI();
+    })
+
     return (
       <>
         <div>
@@ -38,15 +50,26 @@ function App() {
           </p>
         </div>
 
-      <Box sx={{ width: 1200, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>
-        {AbSequence}
-      </Box>
+        <Box sx={{ width: 1200, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>
+          {AbSequence}
+        </Box>
 
-      <Box sx={{height: 50, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Overview (Antibody ID) 
-        Species: {Species}
-      </Box>
+        <Box sx={{height: 50, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Overview (Antibody ID) 
+          Species: {Species}
+        </Box>
 
+        <Box sx={{height: 200, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Genes 
+          <p>IGH: {}</p>
+          <p>IGD: {}</p>
+          <p>IGV: {}</p>
+          <p>SHM: {}</p>
+        </Box>
 
+        <Box sx={{height: 200, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Ab dictionary
+          {abdict.map((item, index) => (
+            <p key={index}>{item}</p>
+          ))}
+        </Box>
       </>
     );
   }

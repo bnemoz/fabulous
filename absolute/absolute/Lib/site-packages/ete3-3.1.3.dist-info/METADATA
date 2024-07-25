@@ -1,0 +1,51 @@
+Metadata-Version: 2.1
+Name: ete3
+Version: 3.1.3
+Summary: A Python Environment for (phylogenetic) Tree Exploration
+Home-page: http://etetoolkit.org
+Download-URL: http://etetoolkit.org/static/releases/ete3/
+Author: Jaime Huerta-Cepas
+Author-email: jhcepas@gmail.com
+Maintainer: Jaime Huerta-Cepas
+Maintainer-email: huerta@embl.de
+License: GPLv3
+Project-URL: Documentation, http://etetoolkit.org/docs/latest/tutorial/index.html
+Project-URL: Source, https://github.com/etetoolkit/ete
+Keywords: tree,tree reconstruction,tree visualization,tree comparison,phylogeny,phylogenetics,phylogenomics
+Platform: OS Independent
+Classifier: Development Status :: 6 - Mature
+Classifier: Environment :: Console
+Classifier: Environment :: X11 Applications :: Qt
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Other Audience
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Natural Language :: English
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires: six
+Provides: ete3
+License-File: LICENSE
+
+
+The Environment for Tree Exploration (ETE) is a Python programming
+toolkit that assists in the recontruction, manipulation, analysis and
+visualization of phylogenetic trees (although clustering trees or any
+other tree-like data structure are also supported).
+
+ETE is currently developed as a tool for researchers working in
+phylogenetics and genomics. If you use ETE for a published work,
+please cite:
+
+::
+
+   Jaime Huerta-Cepas, François Serra and Peer Bork. "ETE 3: Reconstruction,
+   analysis and visualization of phylogenomic data."  Mol Biol Evol (2016) doi:
+   10.1093/molbev/msw046
+
+Visit http://etetoolkit.org for more info.

@@ -1,0 +1,27 @@
+#!C:\Users\bnemo\source\repos\fabulous\absolute\absolute\Scripts\python.exe
+import click
+
+from sample_sheet import SampleSheet
+
+
+@click.group(context_settings=dict(help_option_names=['-h', '--help']))
+def cli():
+    pass
+
+
+@cli.command()
+@click.argument('path')
+def totable(path):
+    """Pretty print a sample sheet to terminal"""
+    print(SampleSheet(path))
+
+
+@cli.command()
+@click.argument('path')
+def tojson(path):
+    """Convert a sample sheet to JSON"""
+    print(SampleSheet(path).to_json())
+
+
+if __name__ == '__main__':
+    cli()
