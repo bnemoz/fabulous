@@ -12,15 +12,52 @@ import Option from '@mui/joy/Option';
 function App() {
 
   const [AbSequence, setAbSequence] = useState('');
+  const [searchPerformed, setSearchPerformed] = useState(false);
+  const [Species, setSpecies] = useState('human');
+
 
   const handleLinkClick = () => {
     setAbSequence('>Test_Antibody\nEGQLLESGGGLAQPGGSLRLSCTASGFTFSKNAMNWVRQAPGKRLEWVAGIIGNGSDTYYADSVKGRFTISRDNSKNTVSLQMNSLRAEDSAIYYCAKDRHPWRWLQLFDSWGQGTLVTVSS');
   };
 
+  const handleSearch = () => {
+    console.log('Submitted sequence and species:', AbSequence, Species);
+    setSearchPerformed(true);
+  };
+
+
+  if (searchPerformed) {
+    return (
+      <>
+        <div>
+          <a href="https://fabulous.nemoz.me">
+            <img src={fabulousLogo} className="logo fabulous" alt="Fabulous logo"/>
+          </a>
+          <p>
+            <Button onClick={() => {setSearchPerformed(false), setAbSequence(''), setSpecies('human')}}>Home</Button>
+          </p>
+        </div>
+
+      <Box sx={{ width: 1200, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>
+        {AbSequence}
+      </Box>
+
+      <Box sx={{height: 50, width: 120, margin: '20px', padding: '20px', border: '1px solid #ccc' }}>Overview (Antibody ID) 
+        Species: {Species}
+      </Box>
+
+
+      </>
+    );
+  }
+
+
   return (
     <>
       <div>
-        <img src={fabulousLogo} className="logo fabulous" alt="Fabulous logo"/>
+        <a href="https://fabulous.nemoz.me">
+          <img src={fabulousLogo} className="logo fabulous" alt="Fabulous logo"/>
+        </a>
       </div>
 
       <div>
@@ -41,7 +78,7 @@ function App() {
             sx={{width: 600}}
           />
 
-          <Button color="primary">
+          <Button color="primary" onClick={handleSearch}>
             Search
           </Button>
 
