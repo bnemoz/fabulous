@@ -21,13 +21,13 @@ function App() {
     setAbSequence('>Test_Antibody\nEGQLLESGGGLAQPGGSLRLSCTASGFTFSKNAMNWVRQAPGKRLEWVAGIIGNGSDTYYADSVKGRFTISRDNSKNTVSLQMNSLRAEDSAIYYCAKDRHPWRWLQLFDSWGQGTLVTVSS');
   };
 
-  const handleSearch = () => {
+  const handleSearch = () => { if (AbSequence !== '') {
     console.log('Submitted sequence and species:', AbSequence, Species);
     setSearchPerformed(true);
-  };
+  }};
 
   const fetchAPI = async () => { if (searchPerformed) if (AbSequence) {
-    const response = await axios.get("http://localhost:8282/api?sequence="+AbSequence);
+    const response = await axios.get("https://localhost:8282/api?sequence="+AbSequence);
     setAbDict(response.data);
   }}
 
