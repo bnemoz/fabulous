@@ -5,7 +5,7 @@ import abstar
 app = Flask(__name__)
 cors = CORS(app, origins=['*'], )
 
-@app.route('/api/antibody', methods=['GET', 'POST'])
+@app.route('/api/antibody/', methods=['GET', 'POST'])
 def main():
     sequence = request.args.get('sequence')
     return jsonify(
