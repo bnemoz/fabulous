@@ -27,7 +27,7 @@ function App() {
   }};
 
   const fetchAPI = async () => { if (searchPerformed) if (AbSequence) {
-    const response = await axios.get("https://localhost:8282/api?sequence="+AbSequence);
+    const response = await axios.get("http://127.0.0.1:8282/api/antibody/?sequence="+AbSequence);
     setAbDict(response.data);
   }}
 
