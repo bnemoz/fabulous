@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "absolute"
+version = "0.1.0"
+description = "AbSolute: our core python engine in charge of all your antibody calculations"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+Flask = "^3.0.3"
+Flask-Cors = "^4.0.1"
+abstar = "^0.6.4"
+fastcluster = "^1.2.6"
+scipy = "^1.14.0"
+abutils = "^0.4.18"
+mnemonic = "^0.21"
+dnachisel = "^3.2.11"
+pandas = "^2.2.2"
+setuptools = "^72.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
