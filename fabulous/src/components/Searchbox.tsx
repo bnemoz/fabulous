@@ -19,6 +19,13 @@ export default function SearchBox() {
     );
     setAbDict(response.data);
   }
+
+  function populateDummySequence() {
+    setAbSequence(
+      "EGQLLESGGGLAQPGGSLRLSCTASGFTFSKNAMNWVRQAPGKRLEWVAGIIGNGSDTYYADSVKGRFTISRDNSKNTVSLQMNSLRAEDSAIYYCAKDRHPWRWLQLFDSWGQGTLVTVSS",
+    );
+  }
+
   return (
     <>
       <Stack direction="row" spacing={2} width={800}>
@@ -52,7 +59,7 @@ export default function SearchBox() {
       </Stack>
 
       <p className="hint">
-        <Link component="a">
+        <Link component="a" onClick={populateDummySequence}>
           Don't have any antibody? Click here to load a dummy sequence
         </Link>
       </p>
