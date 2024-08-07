@@ -37,7 +37,6 @@ export default function Overview({
           border: "1px solid #ccc",
         }}
       >
-        {" "}
         Species: {species}
       </Grid>
       <Grid
