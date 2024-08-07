@@ -58,5 +58,10 @@
 
 p {
     word-wrap: break-word;
-    max-width: 51em;
+    max-width: 100%;
+}
+
+div {
+    word-wrap: break-word;
+    max-width: 100%;
 }

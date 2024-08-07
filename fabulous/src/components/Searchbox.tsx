@@ -10,7 +10,7 @@ import SearchResults from "./searchResults/SearchResults";
 
 export default function SearchBox() {
   const [abSequence, setAbSequence] = useState("");
-  const [abDict, setAbDict] = useState(null);
+  const [abDict, setAbDict] = useState(undefined);
 
   async function search() {
     const response = await axios.get(
@@ -39,13 +39,14 @@ export default function SearchBox() {
         <Textarea
           name="sequence"
           value={abSequence}
-          onChange={(e) => setAbSequence(e.target.value)}
+          onChange={(e) => {
+            e.stopPropagation();
+            setAbSequence(e.target.value);
+          }}
           onKeyDown={(e) => {
-            if (e.keyCode === 13) {
+            if (e.key === "Enter") {
               e.preventDefault();
               search();
-            } else {
-              null;
             }
           }}
           placeholder="Add one or multiple NT or AA sequence(s) in raw or FASTA format"
@@ -63,7 +64,8 @@ export default function SearchBox() {
           Don't have any antibody? Click here to load a dummy sequence
         </Link>
       </p>
-      <SearchResults abSequence={abSequence} abDict={abDict}></SearchResults>
+      <br></br>
+      <SearchResults abDict={abDict}></SearchResults>
     </>
   );
 }
