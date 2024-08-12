@@ -14,7 +14,7 @@ export default function SearchBox() {
 
   async function search() {
     const response = await axios.get(
-      "http://api.fabulous-abs.com/id/?sequence=" + abSequence,
+      "https://api.fabulous-abs.com/id/?sequence=" + abSequence,
     );
     setAbDict(response.data);
   }
