@@ -201,7 +201,7 @@ def id():
             ab = antibody_identification(_item, debug=False)
             results.append(ab)
 
-    return (results[0])
+    return (results[0].annotations)
 
 
 @app.route('/clone', methods=['GET', 'POST'])
