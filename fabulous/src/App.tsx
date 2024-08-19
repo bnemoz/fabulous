@@ -10,7 +10,10 @@ export default function Fabulous() {
         <Logo></Logo>
         <SearchBox></SearchBox>
       </Stack>
-      <p className="footer">Brought to you by a Fabulous team | 2024</p>
+      <p className="footer">
+        <p><a href="">About</a> - <a href="">How it works</a></p>
+        <p>Brought to you by a Fabulous team | 2024</p>
+      </p>
     </>
   );
 }
