@@ -115,10 +115,10 @@ def id():
         return ab_json
 
     if seq_type == 'single fasta':
-        if residues == 'DNA':
+        if residues == 'protein':
             ab_nt = reverse_translate(sequence, species='human')
             ab_json = antibody_identification(ab_nt, species='human')
-        elif residues == 'protein':
+        elif residues == 'DNA':
             ab_json = antibody_identification(sequence, species='human')
         return dict(ab_json)
     
