@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dataclasses import dataclass
+from enum import Enum
 import dnachisel as dc
 from abutils import Sequence
 from abutils.io import read_fasta
@@ -11,7 +13,7 @@ app = Flask(__name__)
 cors = CORS(app, origins=['*'], allow_headers=['Content-Type', 'Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods'])
 
 
-####### Declare some key values for future use
+####### Declare some key values and dataclasses for future use
 
 # Seamless cloning sequences:
 oh_5 = {'IGH': 'gctgggttttccttgttgctattctcgagggtgtccagtgt',
@@ -29,13 +31,96 @@ leader_aa = {'IGH': 'MELGLRWVFLVAILEGVQC',
              'IGK': 'MGWSCIILFLVATATGVH',
              'IGL': 'MGWSCIILFLVATATG'}
 
+class InputType(Enum):
+    DNA = 1
+    PROTEIN = 2
+
+class Species(Enum):
+    HUMAN = 1
+    MOUSE = 2
+    MONKEY = 3
+    HUMANIZED = 4
+
+@dataclass
+class FabulousAb:
+    """Dataclass for keeping track of an antibody in the Fab'ulous environment."""
+    name: str
+    raw_input: str
+    input_type: InputType
+    formatted_input: str
+    species: Species
+    
+    def __init__(self, name, raw_input, input_type, formatted_input, species):
+        self.name = name
+        self.raw_input = cleaner(raw_input)
+        self.input_type = input_type
+        self.formatted_input = cleaner(formatted_input, pure_DNA=True)
+        self.species = species
+
+    def __str__(self):
+        return (self.name+'\n'+self.input_type)
+    def __name__(self):
+        return (self.name+'\n'+self.input_type)
+
 
 
 ####### Python functions to be used by the API 
 
-def infer_input(input, ):
+def preprocessing(raw_input, species="human", debug=False):
+    """Pre-processes the input to figure out input type (raw unformatted, single-FASTA or multi-FASTA) and the origin (nucleotides/DNA or amino-acids/proteins)
+    Formats the input into a suitable format (a list of FabulousAb dataclass instances) for the downstream analysis"""
+    
+    input_seq_type = infer_input(raw_input)
+    if debug:
+        print(input_seq_type)
+        
+    clean_inputs = []
+    
+    if input_seq_type == "unformatted sequence":
+        if raw_input == "":
+            return None
+        fasta_original_input = Sequence(raw_input, id=generate_random_label(8))
+        residue_type = infer_residues(fasta_original_input.sequence, )
+        if debug:
+            print(residue_type)
+        if residue_type == "protein":
+            fasta_nt_input = reverse_translate(fasta_original_input, )
+        elif residue_type == "DNA":
+            fasta_nt_input = fasta_original_input
+        ab = FabulousAb(name=fasta_original_input.id, raw_input=fasta_original_input.sequence, input_type=residue_type, formatted_input=fasta_nt_input.sequence, species=species)
+        clean_inputs.append(ab)
+        return clean_inputs
+        
+    elif input_seq_type == "single fasta":
+        fasta_original_input = read_fasta(raw_input)[0]
+        residue_type = infer_residues(fasta_original_input.sequence, )
+        if debug:
+            print(residue_type)
+        if residue_type == "protein":
+            fasta_nt_input = reverse_translate(fasta_original_input, )
+        elif residue_type == "DNA":
+            fasta_nt_input = fasta_original_input
+        ab = FabulousAb(name=fasta_original_input.id, raw_input=fasta_original_input.sequence, input_type=residue_type, formatted_input=fasta_nt_input.sequence, species=species)
+        clean_inputs.append(ab)
+        return clean_inputs
+    
+    elif input_seq_type == "multi fasta" :
+        _sequences = read_fasta(raw_input)
+        for _seq in _sequences:
+            residue_type = infer_residues(_seq.sequence)
+            if residue_type == "DNA":
+                ab = FabulousAb(name=_seq.id, raw_input=_seq.sequence, input_type=residue_type, formatted_input=_seq.sequence, species=species)
+                clean_inputs.append(ab)
+            elif residue_type == "protein":
+                fasta_nt_input = reverse_translate(_seq, )
+                ab = FabulousAb(name=_seq.id, raw_input=_seq.sequence, input_type=residue_type, formatted_input=fasta_nt_input.sequence, species=species)
+                clean_inputs.append(ab)
+        return clean_inputs
+
+
+def infer_input(sequence, ):
     """Infer the input format of a sequence: unformatted, single fasta, or multi fasta."""
-    _input = str(input)
+    _input = str(sequence)
     carret_count = _input.count('>')
     if carret_count == 0:
         return 'unformatted sequence'
@@ -45,15 +130,30 @@ def infer_input(input, ):
         return 'multi fasta'
 
 
-def infer_residues(input, ):
+def generate_random_label(length=8):
+    """Generate a random label of a specified length."""
+    letters = string.ascii_letters + string.digits
+    return ''.join(random.choice(letters) for _ in range(length))
+
+
+def infer_residues(sequence, ):
     """Infer the rersidue type of a sequence: DNA or protein."""
-    _input = str(input)
-    letters = set([l.lower for l in _input])
+    _input = str(sequence)
+    letters = set([l.lower() for l in _input])
     if len(letters) < 5:
         return "DNA"
     elif len(letters) > 10:
         return "protein"
-    
+
+
+def reverse_translate(sequence, ):
+    """Returns the reverse translated sequence (NT) of an input amino acid sequence."""
+    try:
+        dna = dc.reverse_translate(sequence.sequence, randomize_codons=True, table='Standard')
+        ab_nt = Sequence(dna, id=sequence.id)
+        return ab_nt
+    except:
+        return None
 
 def cleaner(sequence, pure_DNA=False, ):
     """Clean a sequence by removing spaces, dashes, and newlines."""
@@ -66,24 +166,12 @@ def cleaner(sequence, pure_DNA=False, ):
     return _seq.upper()
 
 
-def generate_random_label(length=8):
-    """Generate a random label of a specified length."""
-    letters = string.ascii_letters + string.digits
-    return ''.join(random.choice(letters) for _ in range(length))
-
-
-def antibody_identification(sequence, species):
-    """Main function to provide antibody identification. Returns a JSON object with nested dictionaries."""
-    ab_json = abstar.run(sequence, germ_db=species, verbose=False)
-    return ab_json
-
-
-def reverse_translate(sequence, species):
-    """Returns the reverse translated sequence (NT) of an input amino acid sequence."""
-    ab_aa = Sequence(sequence, id=generate_random_label())
-    dna = dc.reverse_translate(ab_aa.sequence, randomize_codons=True, table='Standard')
-    ab_nt = Sequence(dna, id=ab_aa.id)
-    return ab_nt
+def antibody_identification(fabulous_ab, debug=False, ):
+    _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
+    ab = abstar.run(_seq, germ_db=fabulous_ab.species, verbose=debug)
+    ab.annotations["input_type"] = fabulous_ab.input_type
+    ab.annotations["fabulous_input"] = fabulous_ab.raw_input
+    return ab
 
 
 
@@ -98,36 +186,22 @@ def index():
 @app.route('/id', methods=['GET'])
 def id():
     sequence = request.args.get('sequence')
-    seq_type = infer_input(sequence)
-    residues = infer_residues(sequence)
-
-    if seq_type == 'single fasta':
-        sequence = read_fasta(sequence)
-    elif seq_type == 'unformatted sequence':
-        sequence = cleaner(sequence)
-        sequence = Sequence(sequence, id=generate_random_label())
-        seq_type = 'single fasta'
-    elif seq_type == 'multi fasta':
-        sequence = read_fasta(sequence)
-
-    if sequence in ['', None]:
-        ab_json = {}
-        return ab_json
-
-    if seq_type == 'single fasta':
-        if residues == 'protein':
-            ab_nt = reverse_translate(sequence, species='human')
-            ab_json = antibody_identification(ab_nt, species='human')
-        elif residues == 'DNA':
-            ab_json = antibody_identification(sequence, species='human')
-        return dict(ab_json)
+    sequence = sequence.replace("%3E", ">")
     
-    elif seq_type == 'multi fasta':
-        antibodies = {}
-        for ab in sequence:
-            ab_json = antibody_identification(ab, species='human')
-            antibodies[ab.id] = dict(ab_json)
-        return antibodies
+    try:
+        species = request.args.get('species')
+    except:
+        species = "human"
+    
+    preprocessed = preprocessing(sequence, species=species) 
+
+    results = []
+    if preprocessed is not None:
+        for _item in preprocessed:
+            ab = antibody_identification(_item, debug=False)
+            results.append(ab)
+
+    return (results)
 
 
 @app.route('/clone', methods=['GET', 'POST'])
