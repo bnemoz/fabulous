@@ -201,7 +201,7 @@ def id():
             ab = antibody_identification(_item, debug=False)
             results.append(ab)
 
-    return (dict(results[0].annotations))
+    return (dict(results[0]))
 
 
 @app.route('/optimize', methods=['GET', 'POST'])
