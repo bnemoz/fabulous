@@ -5,9 +5,11 @@ from enum import Enum
 import dnachisel as dc
 from abutils import Sequence
 from abutils.io import read_fasta
+import subprocess as sp
 import abstar
 import string
 import random
+import re
 
 app = Flask(__name__)
 cors = CORS(app, origins=['*'], allow_headers=['Content-Type', 'Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods'])
@@ -167,11 +169,74 @@ def cleaner(sequence, pure_DNA=False, ):
 
 
 def antibody_identification(fabulous_ab, debug=False, ):
+    """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
-    ab = abstar.run(_seq, germ_db=fabulous_ab.species, verbose=debug)
-    ab.annotations["input_type"] = fabulous_ab.input_type
-    ab.annotations["fabulous_input"] = fabulous_ab.raw_input
+    ab = abstar.run(_seq, germ_db=fabulous_ab.species, output_type="json", verbose=debug)
+    ab["input_type"] = fabulous_ab.input_type
+    ab["fabulous_input"] = fabulous_ab.raw_input
+    ab['fr4_nt_mod3'] = longest_substring(ab['fr4_nt'])
+    ab['germ_alignments_nt']['var']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['var']['midline'])
+    ab['germ_alignments_nt']['join']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['join']['midline'])
+    ab['leader_nt'] = leader_nt['IGH' if ab['chain'] == "heavy" else 'IGL' if ab['chain'] == 'lambda' else 'IGK'].upper()
+    ab['leader_aa'] = leader_aa['IGH' if ab['chain'] == "heavy" else 'IGL' if ab['chain'] == 'lambda' else 'IGK'].upper()
     return ab
+
+
+def optimize(ab, debug=False, ):
+    # To-Do
+    pass
+
+
+def clone(ab, debug=False, ):
+    # To-Do
+    pass
+
+
+def numbering(ab, debug=False, ):
+    ab['numbering'] = {}
+    ab['numbering']['kabat'] = anarci_wrap(ab, 'kabat', debug)
+    ab['numbering']['IMGT'] = anarci_wrap(ab, 'IMGT', debug)
+    ab['numbering']['chothia'] = anarci_wrap(ab, 'chothia', debug)
+    ab['numbering']['martin'] = anarci_wrap(ab, 'Martin', debug)
+    ab['numbering']['Aho'] = anarci_wrap(ab, 'Aho', debug)
+    ab['numbering']['wolfguy'] = anarci_wrap(ab, 'Wolfguy', debug)
+    return ab
+
+
+def anarci_wrap(ab, numbering_scheme='IMGT', debug=False):
+    scheme_dict = {'IMGT':'i',
+                   'kabat':'k',
+                   'chothia':'c',
+                   'Martin':'m',
+                   'Aho':'a',
+                   'Wolfguy':'w',
+                   }
+    cmd = f"ANARCI -i {ab['vdj_aa']} --scheme {scheme_dict[numbering_scheme]} --hmmerpath /home/serveradmin/antibody/.venv/bin"
+    anarci_cmd = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
+    stdout, stderr = anarci_cmd.communicate()
+    if debug:
+        return stdout
+    else:
+        raw = stdout.splitlines()[7:-1]
+        numbering = {}
+        try:
+            for i, e in enumerate(raw):
+                elems = e.split(' ')
+                numbering[i] = [elems[1], elems[-1]]
+        except TypeError:
+            numbering = "Sorry :-/ Numbering scheme cannot be assessed"
+        return numbering
+
+
+def longest_substring(string):
+    longest = ""
+    for i in range(len(string)):
+        for j in range(i + 3, len(string) + 1, 3):
+            substring = string[i:j]
+            if len(substring) > len(longest):
+                longest = substring
+    return longest    
+
 
 
 
@@ -213,6 +278,11 @@ def optimize():
 @app.route('/clone', methods=['GET', 'POST'])
 def clone():
     # To-Do
+    pass
+
+@app.route('/number', methods=['GET', 'POST'])
+def number():
+    #To-do
     pass
 
 
