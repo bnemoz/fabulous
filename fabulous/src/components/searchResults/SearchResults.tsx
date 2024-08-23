@@ -11,6 +11,7 @@ interface AbDict {
   isotype: string;
   vdj_aa: string;
   vdj_nt: string;
+  name: string;
 }
 
 export default function SearchResults({ abDict }: { abDict?: AbDict }) {
@@ -21,7 +22,7 @@ export default function SearchResults({ abDict }: { abDict?: AbDict }) {
     <>
       <Grid container spacing={6}>
         <Overview
-          identifier={abDict.oriented_input}
+          identifier={abDict.name}
           chainType={abDict.chain}
           species={abDict.species}
           isotypeAndSubclass={abDict.isotype}

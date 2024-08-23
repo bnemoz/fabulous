@@ -201,17 +201,19 @@ def id():
             ab = antibody_identification(_item, debug=False)
             results.append(ab)
 
-    return (results[0].annotations)
+    return (dict(results[0].annotations))
+
+
+@app.route('/optimize', methods=['GET', 'POST'])
+def optimize():
+    # To-Do
+    pass
 
 
 @app.route('/clone', methods=['GET', 'POST'])
 def clone():
-    sequence = request.args.get('sequence')
-    clone = {}
-    clone['original'] = sequence
-    # clone['optimized'] = 
-    return clone
-
+    # To-Do
+    pass
 
 
 ####### App caller 
