@@ -266,10 +266,9 @@ def id():
         sequence = request.args.get('sequence')
         species = request.args.get('species', 'human')
 
-    # Optional: Ensure the sequence is processed
+    # Optional: Ensure the sequence is processed. This should be taken care of by the frontend
     if sequence:
-        sequence = sequence.replace("%3E", ">")  # Uncomment if needed to decode special characters
-
+        sequence = sequence.replace("%3E", ">") 
     # Process the sequence
     preprocessed = preprocessing(sequence, species=species)
     results = []
@@ -284,7 +283,30 @@ def id():
     else:
         return jsonify({"error": "No results found"}), 400
     
-    
+
+@app.route('/ids', methods=['POST'])
+def ids():
+    data = request.get_json() or request.form
+
+    sequences = []
+
+    for obj in data:
+        sequence_id = obj.get('sequence_id')
+        sequence = obj.get('sequence')
+        species = obj.get('species', 'human')
+        ab = Sequence(sequence, id=sequence_id)
+        ab['species'] = species
+        sequences.append(ab)
+
+    if len(set([ab['species'] for ab in sequences])) == 1:
+        results = abstar.run(sequences, germ_db=sequences[0]['species'], output_type="json", verbose=False)
+
+    else:
+        results = []
+        for ab in sequences:
+            results.append(abstar.run(ab, germ_db=ab['species'], output_type="json", verbose=False))
+    return jsonify(results)
+
 
 @app.route('/optimize', methods=['GET', 'POST'])
 def optimize():
