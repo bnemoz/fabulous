@@ -254,25 +254,37 @@ def index():
 
 @app.route('/id', methods=['GET', 'POST'])
 def id():
-    squence_id = request.args.get('sequence_id')
-    sequence = request.args.get('sequence')
-    # sequence = sequence.replace("%3E", ">")
-    
-    try:
-        species = request.args.get('species')
-    except:
-        species = "human"
-    
-    preprocessed = preprocessing(sequence, species=species) 
+    if request.method == 'POST':
+        # For POST requests, fetch JSON data or form-encoded data
+        data = request.get_json() or request.form
+        sequence_id = data.get('sequence_id')
+        sequence = data.get('sequence')
+        species = data.get('species', 'human')  # Default to "human" if not provided
+    else:
+        # For GET requests, use query parameters
+        sequence_id = request.args.get('sequence_id')
+        sequence = request.args.get('sequence')
+        species = request.args.get('species', 'human')
 
+    # Optional: Ensure the sequence is processed
+    if sequence:
+        sequence = sequence.replace("%3E", ">")  # Uncomment if needed to decode special characters
+
+    # Process the sequence
+    preprocessed = preprocessing(sequence, species=species)
     results = []
     if preprocessed is not None:
         for _item in preprocessed:
             ab = antibody_identification(_item, debug=False)
             results.append(ab)
 
-    return (dict(results[0]))
-
+    # Return the results in a consistent format
+    if results:
+        return jsonify(dict(results[0]))  # Convert the dictionary to JSON for the response
+    else:
+        return jsonify({"error": "No results found"}), 400
+    
+    
 
 @app.route('/optimize', methods=['GET', 'POST'])
 def optimize():
