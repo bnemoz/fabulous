@@ -30,7 +30,7 @@ export default function SearchResults({ abDict }: { abDict?: AbDict }) {
 
         <Grid xs={6}>
           <Stack direction="column" spacing={2}>
-            <GeneUsage chain={abDict.chain}></GeneUsage>
+            <GeneUsage abDict={abDict}></GeneUsage>
             <FullLengthSequences
               aminoAcidVDJ={abDict.vdj_aa}
               nucleotideVDJ={abDict.vdj_nt}

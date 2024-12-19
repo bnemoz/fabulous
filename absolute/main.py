@@ -248,10 +248,11 @@ def index():
     return "Welcome to the Antibody Identification API!"
 
 
-@app.route('/id', methods=['GET'])
+@app.route('/id', methods=['GET', 'POST'])
 def id():
+    squence_id = request.args.get('sequence_id')
     sequence = request.args.get('sequence')
-    sequence = sequence.replace("%3E", ">")
+    # sequence = sequence.replace("%3E", ">")
     
     try:
         species = request.args.get('species')

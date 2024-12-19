@@ -1,0 +1,9 @@
+export default function GeneUsage({ abDict }: { abDict: any }) {
+  return (
+    <>
+      <h1>Gene Usage</h1>
+      <p>V gene | D gene | J gene</p>
+      <p>{abDict.v_gene.full} | {abDict.d_gene.full} | {abDict.j_gene.full}</p>
+    </>
+  );
+}
