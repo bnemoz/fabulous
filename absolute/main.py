@@ -12,7 +12,11 @@ import random
 import re
 
 app = Flask(__name__)
-cors = CORS(app, origins=['*'], allow_headers=['Content-Type', 'Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods'])
+cors = CORS(app, 
+            origins=['*', 'http://localhost:3000'], 
+            allow_headers=['Content-Type', 'Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods'],
+            methods=['GET', 'POST', 'OPTIONS'],
+            )
 
 
 ####### Declare some key values and dataclasses for future use
