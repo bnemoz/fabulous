@@ -146,7 +146,7 @@ def infer_residues(sequence, ):
     """Infer the rersidue type of a sequence: DNA or protein."""
     _input = str(sequence)
     letters = set([l.lower() for l in _input])
-    if len(letters) < 5:
+    if len(letters) < 6:
         return "DNA"
     elif len(letters) > 10:
         return "protein"
@@ -175,25 +175,24 @@ def cleaner(sequence, pure_DNA=False, ):
 def antibody_identification(fabulous_ab, debug=False, ):
     """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
-    ab = abstar.run(_seq, germ_db=fabulous_ab.species, output_type="json", verbose=debug)
+    ab = abstar.run(_seq, germline_database=fabulous_ab.species, output_type="json", verbose=debug)
     ab["input_type"] = fabulous_ab.input_type
     ab["fabulous_input"] = fabulous_ab.raw_input
     ab['fr4_nt_mod3'] = longest_substring(ab['fr4_nt'])
-    ab['germ_alignments_nt']['var']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['var']['midline'])
-    ab['germ_alignments_nt']['join']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['join']['midline'])
-    ab['leader_nt'] = leader_nt['IGH' if ab['chain'] == "heavy" else 'IGL' if ab['chain'] == 'lambda' else 'IGK'].upper()
-    ab['leader_aa'] = leader_aa['IGH' if ab['chain'] == "heavy" else 'IGL' if ab['chain'] == 'lambda' else 'IGK'].upper()
+    # ab['germ_alignments_nt']['var']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['var']['midline'])
+    # ab['germ_alignments_nt']['join']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['join']['midline'])
+    ab['leader_nt'] = leader_nt['IGH' if ab['locus'] == "heavy" else 'IGL' if ab['locus'] == 'lambda' else 'IGK'].upper()
+    ab['leader_aa'] = leader_aa['IGH' if ab['locus'] == "heavy" else 'IGL' if ab['locus'] == 'lambda' else 'IGK'].upper()
     return ab
 
 
-def optimize(ab, debug=False, ):
-    # To-Do
-    pass
+def optimize(ab, species='homo sapiens', debug=False, ):
+    return ab
 
 
 def clone(ab, debug=False, ):
     # To-Do
-    pass
+    return ab
 
 
 def numbering(ab, debug=False, ):
@@ -215,7 +214,7 @@ def anarci_wrap(ab, numbering_scheme='IMGT', debug=False):
                    'Aho':'a',
                    'Wolfguy':'w',
                    }
-    cmd = f"ANARCI -i {ab['vdj_aa']} --scheme {scheme_dict[numbering_scheme]} --hmmerpath /home/serveradmin/antibody/.venv/bin"
+    cmd = f"ANARCI -i {ab['sequence']} --scheme {scheme_dict[numbering_scheme]} --hmmerpath /home/serveradmin/antibody/.venv/bin"
     anarci_cmd = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
     stdout, stderr = anarci_cmd.communicate()
     if debug:
@@ -298,31 +297,34 @@ def ids():
         ab['species'] = species
         sequences.append(ab)
 
-    if len(set([ab['species'] for ab in sequences])) == 1:
-        results = abstar.run(sequences, germ_db=sequences[0]['species'], output_type="json", verbose=False)
+    preprocessed = [preprocessing(s, species=species) for s in sequences]
+    results = []
+    if preprocessed is not None:
+        for _item in preprocessed:
+            ab = antibody_identification(_item, debug=False)
+            results.append(ab)
 
-    else:
-        results = []
-        for ab in sequences:
-            results.append(abstar.run(ab, germ_db=ab['species'], output_type="json", verbose=False))
     return jsonify(results)
 
 
 @app.route('/optimize', methods=['GET', 'POST'])
 def optimize():
-    # To-Do
-    pass
+    ab = request.get_json() or request.form
+    ab = optimize(ab)
+    return ab
 
 
 @app.route('/clone', methods=['GET', 'POST'])
 def clone():
-    # To-Do
-    pass
+    ab = request.get_json() or request.form
+    ab = clone(ab)
+    return ab
 
 @app.route('/number', methods=['GET', 'POST'])
 def number():
-    #To-do
-    pass
+    ab = request.get_json() or request.form
+    ab = numbering(ab)
+    return ab
 
 
 ####### App caller 
