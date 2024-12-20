@@ -178,7 +178,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
     ab["input_type"] = fabulous_ab.input_type
     ab["fabulous_input"] = fabulous_ab.raw_input
-    ab['fr4_nt_mod3'] = longest_substring(ab['fr4_nt'])
+    ab['fr4_nt_mod3'] = longest_substring(ab['fwr4'])
     # ab['germ_alignments_nt']['var']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['var']['midline'])
     # ab['germ_alignments_nt']['join']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['join']['midline'])
     ab['leader_nt'] = leader_nt['IGH' if ab['locus'] == "heavy" else 'IGL' if ab['locus'] == 'lambda' else 'IGK'].upper()
