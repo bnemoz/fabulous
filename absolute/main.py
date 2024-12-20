@@ -176,9 +176,8 @@ def infer_residues(sequence, ):
 def reverse_translate(sequence, ):
     """Returns the reverse translated sequence (NT) of an input amino acid sequence."""
     try:
-        dna = dc.reverse_translate(sequence.sequence, randomize_codons=True, table='Standard')
-        ab_nt = Sequence(dna, id=sequence.id)
-        return ab_nt
+        dna = dc.reverse_translate(sequence, randomize_codons=True, table='Standard')
+        return dna
     except:
         return None
 
@@ -440,9 +439,14 @@ def id():
         species = request.args.get('species', 'human')
 
     # Process the sequence
-    preprocessed = preprocessing(sequence_id, sequence, species=species)
-    result = antibody_identification(preprocessed, debug=False)
-    # result = abstar.run(preprocessed, germline_database=species, verbose=False)
+    try:
+        preprocessed = preprocessing(sequence_id, sequence, species=species)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    try:
+        result = antibody_identification(preprocessed, debug=False)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
     # Return the results in a consistent format
     if result:
