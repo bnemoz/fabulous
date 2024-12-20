@@ -175,7 +175,7 @@ def cleaner(sequence, pure_DNA=False, ):
 def antibody_identification(fabulous_ab, debug=False, ):
     """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
-    ab = abstar.run(_seq, germline_database=fabulous_ab.species, output_type="json", verbose=debug)
+    ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
     ab["input_type"] = fabulous_ab.input_type
     ab["fabulous_input"] = fabulous_ab.raw_input
     ab['fr4_nt_mod3'] = longest_substring(ab['fr4_nt'])
