@@ -1,16 +1,46 @@
+#############################################################################################################
+#                                                                                                           #
+#               Imports                                                                                     #
+#                                                                                                           #
+#############################################################################################################
+
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
 from dataclasses import dataclass
 from enum import Enum
+from collections import Counter
+
+import string
+import random
+# import re
+
+# from Bio.Seq import Seq
 import dnachisel as dc
 from abutils import Sequence
 from abutils.io import read_fasta
+# from abutils.io import read_airr, list_files
+from abutils import alignment
+# import antpack
+from antpack import SingleChainAnnotator
+# from antpack import PairedChainAnnotator
+import abutils
 import subprocess as sp
 import abstar
-import string
-import random
-import re
 
+
+
+
+
+
+#############################################################################################################
+#                                                                                                           #
+#               Defining App                                                                                #
+#                                                                                                           #
+#############################################################################################################
+ 
+ 
 app = Flask(__name__)
 cors = CORS(app, 
             origins=['*', 'http://localhost:3000'], 
@@ -19,7 +49,17 @@ cors = CORS(app,
             )
 
 
-####### Declare some key values and dataclasses for future use
+
+
+
+
+
+#############################################################################################################
+#                                                                                                           #
+#               Key values and dataclasses                                                                  #
+#                                                                                                           #
+#############################################################################################################
+
 
 # Seamless cloning sequences:
 oh_5 = {'IGH': 'gctgggttttccttgttgctattctcgagggtgtccagtgt',
@@ -70,9 +110,19 @@ class FabulousAb:
 
 
 
-####### Python functions to be used by the API 
 
-def preprocessing(raw_input, species="human", debug=False):
+
+
+
+
+#############################################################################################################
+#                                                                                                           #
+#               Python functions to be used by the API                                                      #
+#                                                                                                           #
+#############################################################################################################
+
+
+def preprocessing(sequence_id, raw_input, species="human", debug=False):
     """Pre-processes the input to figure out input type (raw unformatted, single-FASTA or multi-FASTA) and the origin (nucleotides/DNA or amino-acids/proteins)
     Formats the input into a suitable format (a list of FabulousAb dataclass instances) for the downstream analysis"""
     
@@ -80,48 +130,15 @@ def preprocessing(raw_input, species="human", debug=False):
     if debug:
         print(input_seq_type)
         
-    clean_inputs = []
-    
-    if input_seq_type == "unformatted sequence":
-        if raw_input == "":
-            return None
-        fasta_original_input = Sequence(raw_input, id=generate_random_label(8))
-        residue_type = infer_residues(fasta_original_input.sequence, )
-        if debug:
-            print(residue_type)
-        if residue_type == "protein":
-            fasta_nt_input = reverse_translate(fasta_original_input, )
-        elif residue_type == "DNA":
-            fasta_nt_input = fasta_original_input
-        ab = FabulousAb(name=fasta_original_input.id, raw_input=fasta_original_input.sequence, input_type=residue_type, formatted_input=fasta_nt_input.sequence, species=species)
-        clean_inputs.append(ab)
-        return clean_inputs
-        
-    elif input_seq_type == "single fasta":
-        fasta_original_input = read_fasta(raw_input)[0]
-        residue_type = infer_residues(fasta_original_input.sequence, )
-        if debug:
-            print(residue_type)
-        if residue_type == "protein":
-            fasta_nt_input = reverse_translate(fasta_original_input, )
-        elif residue_type == "DNA":
-            fasta_nt_input = fasta_original_input
-        ab = FabulousAb(name=fasta_original_input.id, raw_input=fasta_original_input.sequence, input_type=residue_type, formatted_input=fasta_nt_input.sequence, species=species)
-        clean_inputs.append(ab)
-        return clean_inputs
-    
-    elif input_seq_type == "multi fasta" :
-        _sequences = read_fasta(raw_input)
-        for _seq in _sequences:
-            residue_type = infer_residues(_seq.sequence)
-            if residue_type == "DNA":
-                ab = FabulousAb(name=_seq.id, raw_input=_seq.sequence, input_type=residue_type, formatted_input=_seq.sequence, species=species)
-                clean_inputs.append(ab)
-            elif residue_type == "protein":
-                fasta_nt_input = reverse_translate(_seq, )
-                ab = FabulousAb(name=_seq.id, raw_input=_seq.sequence, input_type=residue_type, formatted_input=fasta_nt_input.sequence, species=species)
-                clean_inputs.append(ab)
-        return clean_inputs
+    _seq = str(raw_input).replace(" ", "").replace("-", "").replace("\n","")
+    residue_type = infer_residues(_seq, )
+    if residue_type == 'protein':
+        formatted_input = reverse_translate(_seq, )
+    elif residue_type == 'DNA':
+        formatted_input = _seq
+
+    ab = FabulousAb(name=sequence_id, raw_input=_seq, input_type=residue_type, formatted_input=formatted_input, species=species)
+    return ab
 
 
 def infer_input(sequence, ):
@@ -161,6 +178,7 @@ def reverse_translate(sequence, ):
     except:
         return None
 
+
 def cleaner(sequence, pure_DNA=False, ):
     """Clean a sequence by removing spaces, dashes, and newlines."""
     _seq = str(sequence)
@@ -174,15 +192,15 @@ def cleaner(sequence, pure_DNA=False, ):
 
 def antibody_identification(fabulous_ab, debug=False, ):
     """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
+    
+    # Initial annotation with AbStar
     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
     ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
+
+    # Adding Fab'ulous specific annotations to the AbStar output
     ab["input_type"] = fabulous_ab.input_type
     ab["fabulous_input"] = fabulous_ab.raw_input
-    ab['fr4_nt_mod3'] = longest_substring(ab['fwr4'])
-    # ab['germ_alignments_nt']['var']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['var']['midline'])
-    # ab['germ_alignments_nt']['join']['html_mid'] = re.sub(' ', '.', ab['germ_alignments_nt']['join']['midline'])
-    ab['leader_nt'] = leader_nt['IGH' if ab['locus'] == "heavy" else 'IGL' if ab['locus'] == 'lambda' else 'IGK'].upper()
-    ab['leader_aa'] = leader_aa['IGH' if ab['locus'] == "heavy" else 'IGL' if ab['locus'] == 'lambda' else 'IGK'].upper()
+
     return ab
 
 
@@ -195,15 +213,15 @@ def clone(ab, debug=False, ):
     return ab
 
 
-def numbering(ab, debug=False, ):
-    ab['numbering'] = {}
-    ab['numbering']['kabat'] = anarci_wrap(ab, 'kabat', debug)
-    ab['numbering']['IMGT'] = anarci_wrap(ab, 'IMGT', debug)
-    ab['numbering']['chothia'] = anarci_wrap(ab, 'chothia', debug)
-    ab['numbering']['martin'] = anarci_wrap(ab, 'Martin', debug)
-    ab['numbering']['Aho'] = anarci_wrap(ab, 'Aho', debug)
-    ab['numbering']['wolfguy'] = anarci_wrap(ab, 'Wolfguy', debug)
-    return ab
+def numbering(ab, scheme, algo='anarci', debug=False, ):
+    if algo == 'anarci':
+        ab['numbering'] = {}
+        ab['numbering'][scheme] = anarci_wrap(ab, scheme, debug)
+        return ab
+    elif algo == 'antpack':
+        ab['numbering'] = {}
+        ab['numbering'][scheme] = antpack_wrap(ab, scheme, debug)
+        return ab
 
 
 def anarci_wrap(ab, numbering_scheme='IMGT', debug=False):
@@ -231,6 +249,27 @@ def anarci_wrap(ab, numbering_scheme='IMGT', debug=False):
         return numbering
 
 
+def antpack_wrap(ab, numbering_scheme='IMGT', debug=False):
+    scheme_dict = {'IMGT':'imgt',
+                   'kabat':'kabat',
+                   'Martin':'martin',
+                   'Aho':'aho',
+                   }
+    
+    if numbering_scheme not in scheme_dict.keys():
+        return "Sorry :-/ Numbering scheme not supported"
+    
+    sequence = ab['sequence_aa']
+    chain = 'H' if ab['locus'] == 'heavy' else 'K' if ab['locus'] == 'kappa' else 'L'
+    sc_annotator = SingleChainAnnotator([chain, ], scheme = scheme_dict[numbering_scheme])
+    numbered, percent_identity, chain_type, err_message = sc_annotator.analyze_seq(sequence)
+    try:
+        output = [(a,z) for a,z in zip(numbered, sequence)]
+    except:
+        output = err_message
+
+    return output
+
 def longest_substring(string):
     longest = ""
     for i in range(len(string)):
@@ -241,10 +280,139 @@ def longest_substring(string):
     return longest    
 
 
+def assign5prime(ab):
+    leaders = read_fasta('./refs/L.fasta')
+    alns = alignment.semiglobal_alignment(query=ab['leader'], targets=leaders)
+    maxi = max(Counter([a.score for a in alns]))
+    aln = [a for a in alns if a.score == maxi][0]
+    ab['signal_peptide_id'] = aln.target_id
+    ab['signal_peptide_score'] = maxi
+    ab['signal_peptide_sequence'] = aln.query.sequence[aln.query_begin:]
+    ab['signal_peptide_sequence_aa'] = dc.translate(aln.query.sequence[aln.query_begin:])
+
+    ab['5-UTR'] = aln.query.sequence[:aln.query_begin]
+    
+    part1 = read_fasta('./refs/L1.fasta')
+    alns = alignment.semiglobal_alignment(query=ab['signal_peptide_sequence'], targets=part1)
+    maxi = max(Counter([a.score for a in alns]))
+    aln = [a for a in alns if a.score == maxi][0]
+    ab['L_part_1'] = aln.query.sequence[:aln.target_end+1]
+    ab['L_part_2'] = aln.query.sequence[aln.target_end+1:]
+    
+    return ab
+
+
+def assign3prime(ab):
+    ab = assign_ch1(ab)
+    if ab['locus'] != 'IGH':
+        return ab
+    else:
+        ab = assign_ch2(ab)
+        ab = assign_ch3(ab)
+        if any([(ab['c_call'].startswith('IgE')), (ab['c_call'].startswith('IgM'))]):
+            ab = assign_ch4(ab)
+        ab = assign_h(ab)
+        return ab
+
+
+def assign_ch1(ab):
+    query = ab['trailer']
+    if ab['locus'] == 'IGH':
+        ch1 = read_fasta('./refs/CH1.fasta')
+    else:
+        ch1 = read_fasta('./refs/CL1.fasta')
+    alns = alignment.semiglobal_alignment(query=query, targets=ch1)
+    maxi = max(Counter([a.score for a in alns]))
+    aln = [a for a in alns if a.score == maxi][0]
+    ab['ch1'] = aln.target_id
+    ab['ch1_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+    ab['ch1_sequence_aa'] = dc.translate(ab.sequence[-1:]+ab['ch1_sequence'])
+    return ab
+
+
+def assign_ch2(ab):
+    query = ab['trailer'].split(ab['ch1_sequence'])[-1]
+    if len(query) < 260:
+        return ab
+    ch2 = read_fasta('./refs/CH2.fasta')
+    alns = alignment.semiglobal_alignment(query=query, targets=ch2)
+    maxi = max(Counter([a.score for a in alns]))
+    aln = [a for a in alns if a.score == maxi][0]
+    ab['ch2'] = aln.target_id
+    ab['ch2_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+    ab['ch2_sequence_aa'] = dc.translate(ab['ch1_sequence'][-1:]+ab['ch2_sequence'])
+    return ab
+
+
+def assign_ch3(ab):
+    try:
+        query = ab['trailer'].split(ab['ch2_sequence'])[1]
+        if len(query) < 260:
+            return ab
+        ch3 = read_fasta('./refs/CH3.fasta')
+        alns = alignment.semiglobal_alignment(query=query, targets=ch3)
+        maxi = max(Counter([a.score for a in alns]))
+        aln = [a for a in alns if a.score == maxi][0]
+        ab['ch3'] = aln.target_id
+        ab['ch3_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+        ab['ch3_sequence_aa'] = dc.translate(ab['ch2_sequence'][-2:]+ab['ch3_sequence'])
+        return ab
+    except:
+        return ab
+
+
+def assign_ch4(ab):
+    query = ab['trailer'].split(ab['ch3_sequence'])[1]
+    ch4 = read_fasta('./refs/CH4.fasta')
+    alns = alignment.semiglobal_alignment(query=query, targets=ch4)
+    maxi = max(Counter([a.score for a in alns]))
+    aln = [a for a in alns if a.score == maxi][0]
+    ab['ch4'] = aln.target_id
+    ab['ch4_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+    ab['ch4_sequence_aa'] = dc.translate(ab['ch4_sequence'])
+    return ab
+
+
+def assign_h(ab):
+    query = ab['trailer']
+    h = read_fasta('./refs/H.fasta')
+    alns = alignment.semiglobal_alignment(query=query, targets=h)
+    maxi = max(Counter([a.score for a in alns]))
+    aln = [a for a in alns if a.score == maxi][0]
+    ab['hinge'] = aln.target_id
+    ab['hinge_sequence'] = aln.aligned_query[aln.query_begin:aln.query_end+1].replace('-','')
+    ab['hinge_sequence_aa'] = dc.translate(aln.aligned_query[aln.query_begin-1]+ab['hinge_sequence'],)
+    return ab
+
+
+def abnotator(ab, debug=False, ):
+    try:
+        leader, trailer = ab['sequence_input'].split(ab.sequence)
+        ab['leader'] = leader
+        ab['trailer'] = trailer
+    except:
+        ab['leader'] = None
+        ab['trailer'] = None
+        return ab
+
+    ab = assign5prime(ab)
+    ab = assign3prime(ab)
+  
+    return ab
 
 
 
-####### API routes 
+
+
+
+
+
+#############################################################################################################
+#                                                                                                           #
+#               API routes                                                                                  #
+#                                                                                                           #
+#############################################################################################################
+
 
 @app.route('/', methods=['GET'])
 def index():
@@ -265,20 +433,14 @@ def id():
         sequence = request.args.get('sequence')
         species = request.args.get('species', 'human')
 
-    # Optional: Ensure the sequence is processed. This should be taken care of by the frontend
-    if sequence:
-        sequence = sequence.replace("%3E", ">") 
     # Process the sequence
-    preprocessed = preprocessing(sequence, species=species)
-    results = []
-    if preprocessed is not None:
-        for _item in preprocessed:
-            ab = antibody_identification(_item, debug=False)
-            results.append(ab)
+    preprocessed = preprocessing(sequence_id, sequence, species=species)
+    result = antibody_identification(preprocessed, debug=False)
+    # result = abstar.run(preprocessed, germline_database=species, verbose=False)
 
     # Return the results in a consistent format
-    if results:
-        return jsonify(dict(results[0]))  # Convert the dictionary to JSON for the response
+    if result:
+        return jsonify(dict(result))  # Convert the dictionary to JSON for the response
     else:
         return jsonify({"error": "No results found"}), 400
     
@@ -287,18 +449,17 @@ def id():
 def ids():
     data = request.get_json() or request.form
 
-    sequences = []
+    preprocessed = []
 
     for obj in data:
         sequence_id = obj.get('sequence_id')
         sequence = obj.get('sequence')
         species = obj.get('species', 'human')
-        ab = Sequence(sequence, id=sequence_id)
-        ab['species'] = species
-        sequences.append(ab)
+        ab = preprocessing(sequence_id, sequence, species=species)
+        preprocessed.append(ab)
 
-    preprocessed = [preprocessing(s, species=species) for s in sequences]
     results = []
+
     if preprocessed is not None:
         for _item in preprocessed:
             ab = antibody_identification(_item, debug=False)
@@ -320,12 +481,34 @@ def clone():
     ab = clone(ab)
     return ab
 
-@app.route('/number', methods=['GET', 'POST'])
+
+@app.route('/number', methods=['POST'])
 def number():
     ab = request.get_json() or request.form
     ab = numbering(ab)
     return ab
 
+
+@app.route('/annotate', methods=['POST'])
+def annotate():
+    ab = request.get_json() or request.form
+    ab = abnotator(ab)
+    return ab
+
+
+@app.route('/clonotype', methods=['POST'])
+def clonotype():
+    data = request.get_json() or request.form
+    
+    clusters = abutils.tools.cluster.cluster(data, )
+    return clusters
+
+
+@app.route('/phylogeny', methods=['POST'])
+def phylogeny():
+    data = request.get_json() or request.form
+    
+    return data
 
 ####### App caller 
 
