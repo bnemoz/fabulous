@@ -126,18 +126,22 @@ def preprocessing(sequence_id, raw_input, species="human", debug=False):
     """Pre-processes the input to figure out input type (raw unformatted, single-FASTA or multi-FASTA) and the origin (nucleotides/DNA or amino-acids/proteins)
     Formats the input into a suitable format (a list of FabulousAb dataclass instances) for the downstream analysis"""
     
-    input_seq_type = infer_input(raw_input)
-    if debug:
-        print(input_seq_type)
+    # input_seq_type = infer_input(raw_input)
+    # if debug:
+    #     print(input_seq_type)
         
-    _seq = str(raw_input).replace(" ", "").replace("-", "").replace("\n","")
-    residue_type = infer_residues(_seq, )
-    if residue_type == 'protein':
-        formatted_input = reverse_translate(_seq, )
-    elif residue_type == 'DNA':
-        formatted_input = _seq
+    # _seq = str(raw_input).replace(" ", "").replace("-", "").replace("\n","")
 
-    ab = FabulousAb(name=sequence_id, raw_input=_seq, input_type=residue_type, formatted_input=formatted_input, species=species)
+    residue_type = infer_residues(raw_input, )
+    if debug:
+        print(residue_type)
+    
+    if residue_type == 'protein':
+        formatted_input = reverse_translate(raw_input, )
+    elif residue_type == 'DNA':
+        formatted_input = raw_input
+
+    ab = FabulousAb(name=sequence_id, raw_input=raw_input, input_type=residue_type, formatted_input=formatted_input, species=species)
     return ab
 
 
@@ -181,13 +185,15 @@ def reverse_translate(sequence, ):
 
 def cleaner(sequence, pure_DNA=False, ):
     """Clean a sequence by removing spaces, dashes, and newlines."""
-    _seq = str(sequence)
-    _seq = sequence.replace(" ", "")
-    _seq = _seq.replace("-", "")
-    _seq = _seq.replace("\n","")
-    if pure_DNA:
-        _seq = _seq.replace("U", "T")
-    return _seq.upper()
+    if sequence is not None:
+        _seq = str(sequence)
+        _seq = sequence.replace(" ", "")
+        _seq = _seq.replace("-", "")
+        _seq = _seq.replace("\n","")
+        if pure_DNA:
+            _seq = _seq.replace("U", "T")
+        return _seq.upper()
+
 
 
 def antibody_identification(fabulous_ab, debug=False, ):
