@@ -10,7 +10,6 @@ from flask import Flask, request, jsonify
 # from graphene import ObjectType, String, Schema, Field, List
 from flask_cors import CORS
 from ariadne import QueryType, make_executable_schema, graphql_sync
-from ariadne.constants import PLAYGROUND_HTML
 
 
 from dataclasses import dataclass
@@ -563,11 +562,8 @@ def phylogeny():
     return data
 
 
-@app.route("/graphql", methods=["GET", "POST"])
+@app.route("/graphql", methods=["POST"])
 def graphql_server():
-    if request.method == "GET":
-        return PLAYGROUND_HTML, 200  # GraphQL Playground for testing
-
     data = request.get_json()
     success, result = graphql_sync(schema, data, context_value=request, debug=True)
     status_code = 200 if success else 400
