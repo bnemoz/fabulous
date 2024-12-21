@@ -29,6 +29,7 @@ from abutils import alignment
 # import antpack
 from antpack import SingleChainAnnotator
 # from antpack import PairedChainAnnotator
+from antpack import HumanizationTool
 import abutils
 import subprocess as sp
 import abstar
@@ -447,9 +448,24 @@ def abnotator(ab, debug=False, ):
     return ab
 
 
+def humanize(ab, knob:float = 1.25, debug=False, ):
 
+    h_tool = HumanizationTool()
+    original = ab['sequence']
 
+    score, mutations, humanized = h_tool.suggest_mutations(original, 
+                                                     excluded_positions = [],
+                                                     s_thresh = knob,
+                                                    )
+    # aln = alignment.semiglobal_alignment(original, humanized)
+    percent_change = round(len(mutations)/len(humanized) * 100, 2)
 
+    ab['humanized'] = humanized
+    ab['humanization_score'] = score
+    ab['humanization_mutations'] = mutations
+    ab['humanization_percent_change'] = percent_change
+
+    return ab
 
 
 
@@ -560,6 +576,17 @@ def phylogeny():
     data = request.get_json() or request.form
     
     return data
+
+
+@app.route('/humanize', methods=['POST'])
+def _humanize():
+    data = request.get_json() or request.form
+    ab = data.get('antibody')
+    knob = data.get('knob', 1.25)
+
+    ab = humanize(ab, knob=knob)
+
+    return ab
 
 
 @app.route("/graphql", methods=["POST"])
