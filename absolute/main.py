@@ -6,9 +6,12 @@
 
 
 from flask import Flask, request, jsonify
-from flask_graphql import GraphQLView
-from graphene import ObjectType, String, Schema, Field, List
+# from flask_graphql import GraphQLView
+# from graphene import ObjectType, String, Schema, Field, List
 from flask_cors import CORS
+from ariadne import QueryType, make_executable_schema, graphql_sync
+from ariadne.constants import PLAYGROUND_HTML
+
 
 from dataclasses import dataclass
 from enum import Enum
@@ -43,9 +46,6 @@ import abstar
 #############################################################################################################
  
 
-# Create GraphQL schema
-schema = Schema(query=Query)
-
 # Create Flask app
 app = Flask(__name__)
 cors = CORS(app, 
@@ -53,17 +53,6 @@ cors = CORS(app,
             allow_headers=['Content-Type', 'Access-Control-Allow-Origin', 'Access-Control-Allow-Headers', 'Access-Control-Allow-Methods'],
             methods=['GET', 'POST', 'OPTIONS'],
             )
-
-# Add /graphql endpoint
-app.add_url_rule(
-    '/graphql',
-    view_func=GraphQLView.as_view(
-        'graphql',
-        schema=schema,
-        graphiql=True  # Enables GraphiQL interface for testing
-    )
-)
-
 
 
 
@@ -124,45 +113,46 @@ class FabulousAb:
         return (self.name+'\n'+self.input_type)
 
 
-# Define GraphQL types
-class AntibodyType(ObjectType):
-    sequence_id = String()
-    raw_input = String()
-    input_type = String()
-    formatted_input = String()
-    species = String()
+# Define GraphQL schema
+type_defs = """
+    type Query {
+        hello: String!
+        antibody(sequence_id: String!, sequence: String!, species: String = "human"): Antibody!
+    }
 
+    type Antibody {
+        sequence_id: String!
+        raw_input: String!
+        input_type: String!
+        formatted_input: String!
+        species: String!
+    }
+"""
 
-# Create GraphQL Query class
-class Query(ObjectType):
-    antibody = Field(
-        AntibodyType,
-        sequence_id=String(required=True),
-        sequence=String(required=True),
-        species=String(default_value="human")
-    )
+# Create resolvers
+query = QueryType()
 
-    # Corrected resolver for 'antibody'
-    def resolve_antibody(self, info, sequence_id, sequence, species):
-        try:
-            # Preprocess the input
-            preprocessed = preprocessing(sequence_id, sequence, species=species)
-            
-            # Identify antibody
-            result = antibody_identification(preprocessed)
-            
-            # Build the response object
-            return AntibodyType(
-                sequence_id=sequence_id,
-                raw_input=preprocessed.raw_input,
-                input_type=preprocessed.input_type.name if isinstance(preprocessed.input_type, Enum) else str(preprocessed.input_type),
-                formatted_input=preprocessed.formatted_input,
-                species=species
-            )
-        except Exception as e:
-            # Return a GraphQL-compatible error
-            raise Exception(f"Error processing antibody: {e}")
+@query.field("hello")
+def resolve_hello(*_):
+    return "Hello, GraphQL!"
 
+@query.field("antibody")
+def resolve_antibody(_, info, sequence_id, sequence, species="human"):
+    try:
+        preprocessed = preprocessing(sequence_id, sequence, species=species)
+        result = antibody_identification(preprocessed)
+        return {
+            "sequence_id": sequence_id,
+            "raw_input": preprocessed.raw_input,
+            "input_type": str(preprocessed.input_type),
+            "formatted_input": preprocessed.formatted_input,
+            "species": species,
+        }
+    except Exception as e:
+        raise Exception(f"Error processing antibody: {e}")
+
+# Create executable schema
+schema = make_executable_schema(type_defs, query)
 
 
 
@@ -573,7 +563,15 @@ def phylogeny():
     return data
 
 
+@app.route("/graphql", methods=["GET", "POST"])
+def graphql_server():
+    if request.method == "GET":
+        return PLAYGROUND_HTML, 200  # GraphQL Playground for testing
 
+    data = request.get_json()
+    success, result = graphql_sync(schema, data, context_value=request, debug=True)
+    status_code = 200 if success else 400
+    return jsonify(result), status_code
 
 
 ####### App caller 
