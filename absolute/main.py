@@ -6,6 +6,8 @@
 
 
 from flask import Flask, request, jsonify
+from flask_graphql import GraphQLView
+from graphene import ObjectType, String, Schema, Field, List
 from flask_cors import CORS
 
 from dataclasses import dataclass
@@ -40,7 +42,11 @@ import abstar
 #                                                                                                           #
 #############################################################################################################
  
- 
+
+# Create GraphQL schema
+schema = Schema(query=Query)
+
+# Create Flask app
 app = Flask(__name__)
 cors = CORS(app, 
             origins=['*', 'http://localhost:3000'], 
@@ -48,6 +54,15 @@ cors = CORS(app,
             methods=['GET', 'POST', 'OPTIONS'],
             )
 
+# Add /graphql endpoint
+app.add_url_rule(
+    '/graphql',
+    view_func=GraphQLView.as_view(
+        'graphql',
+        schema=schema,
+        graphiql=True  # Enables GraphiQL interface for testing
+    )
+)
 
 
 
@@ -109,7 +124,44 @@ class FabulousAb:
         return (self.name+'\n'+self.input_type)
 
 
+# Define GraphQL types
+class AntibodyType(ObjectType):
+    sequence_id = String()
+    raw_input = String()
+    input_type = String()
+    formatted_input = String()
+    species = String()
 
+
+# Create GraphQL Query class
+class Query(ObjectType):
+    antibody = Field(
+        AntibodyType,
+        sequence_id=String(required=True),
+        sequence=String(required=True),
+        species=String(default_value="human")
+    )
+
+    # Corrected resolver for 'antibody'
+    def resolve_antibody(self, info, sequence_id, sequence, species):
+        try:
+            # Preprocess the input
+            preprocessed = preprocessing(sequence_id, sequence, species=species)
+            
+            # Identify antibody
+            result = antibody_identification(preprocessed)
+            
+            # Build the response object
+            return AntibodyType(
+                sequence_id=sequence_id,
+                raw_input=preprocessed.raw_input,
+                input_type=preprocessed.input_type.name if isinstance(preprocessed.input_type, Enum) else str(preprocessed.input_type),
+                formatted_input=preprocessed.formatted_input,
+                species=species
+            )
+        except Exception as e:
+            # Return a GraphQL-compatible error
+            raise Exception(f"Error processing antibody: {e}")
 
 
 
@@ -519,6 +571,10 @@ def phylogeny():
     data = request.get_json() or request.form
     
     return data
+
+
+
+
 
 ####### App caller 
 
