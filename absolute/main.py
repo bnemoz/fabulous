@@ -546,16 +546,15 @@ def id():
         return jsonify({"error": str(e)}), 400
     try:
         result, errors = antibody_identification(preprocessed, debug=False)
+        print(errors)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
     # Return the results in a consistent format
     if result:
-        return jsonify({"results":dict(result), 
-                        "error":dict([str(err) for err in errors] if isinstance(errors, list) else {})
-                        })
+        return jsonify({"results":dict(result)})
     else:
-        return jsonify({"error":dict([str(err) for err in errors] if isinstance(errors, list) else {"error": "No results found"})}), 400
+        return jsonify({"error": "No results found"}), 400
     
 
 @app.route('/ids', methods=['POST'])
