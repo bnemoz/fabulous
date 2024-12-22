@@ -81,6 +81,21 @@ leader_aa = {'IGH': 'MELGLRWVFLVAILEGVQC',
              'IGK': 'MGWSCIILFLVATATGVH',
              'IGL': 'MGWSCIILFLVATATG'}
 
+# Isotype dictionary:
+isotypes = {'IGHG1': 'IgG1',
+            'IGHG2': 'IgG2',
+            'IGHG3': 'IgG3',
+            'IGHG4': 'IgG4',
+            'IGHE': 'IgE',
+            'IGHA1': 'IgA1',
+            'IGHA2': 'IgA2',
+            'IGHM': 'IgM',
+            'IGHD': 'IgD',
+            'IGK': 'kappa',
+            'IGL': 'lambda'
+            }
+
+
 class InputType(Enum):
     DNA = 1
     PROTEIN = 2
@@ -248,7 +263,25 @@ def antibody_identification(fabulous_ab, debug=False, ):
     ab["input_type"] = fabulous_ab.input_type
     ab["fabulous_input"] = fabulous_ab.raw_input
 
+    try:
+        ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
+        ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
+    except:
+        ab['chain'] = "Unknown"
+        ab['isotype'] = "Unknwon"
+
+    # Calculating SHM 
+    ab['SHM_v_nt'] = (1 - ab['v_identity']) * 100
+    ab['SHM_v_aa'] = (1 - ab['v_identity_aa']) * 100
+    if ab['j_identity'] is not None:
+        ab['SHM_vj_nt'] = ((1 - ab['vj_identity']) + (1 - ab['j_identity'])) * 100
+        ab['SHM_vj_aa'] = ((1 - ab['vj_identity_aa']) + (1 - ab['j_identity_aa'])) * 100
+    else:
+        ab['SHM_vj_nt'] = None
+        ab['SHM_vj_aa'] = None
+
     return ab
+
 
 
 def optimize(ab, species='homo sapiens', debug=False, ):
