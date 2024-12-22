@@ -551,7 +551,7 @@ def id():
 
     # Return the results in a consistent format
     if result:
-        return jsonify(dict(result), dict(errors))  # Convert the dictionary to JSON for the response
+        return jsonify({"results":dict(result), "error":dict(errors)})  # Convert the dictionary to JSON for the response
     else:
         return jsonify({"error": "No results found"}), 400
     
