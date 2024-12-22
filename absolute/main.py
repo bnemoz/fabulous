@@ -265,9 +265,11 @@ def antibody_identification(fabulous_ab, debug=False, ):
 
     try:
         ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
-        ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
     except:
         ab['chain'] = "Unknown"
+    try:
+        ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
+    except:
         ab['isotype'] = "Unknwon"
 
     # Calculating SHM 
