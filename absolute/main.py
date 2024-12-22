@@ -552,10 +552,10 @@ def id():
     # Return the results in a consistent format
     if result:
         return jsonify({"results":dict(result), 
-                        "error":dict([str(err) for err in errors] if isinstance(errors, list) else str(errors))
+                        "error":dict([str(err) for err in errors] if isinstance(errors, list) else {})
                         })
     else:
-        return jsonify({"error": "No results found"}), 400
+        return jsonify({"error":dict([str(err) for err in errors] if isinstance(errors, list) else {"error": "No results found"})}), 400
     
 
 @app.route('/ids', methods=['POST'])
