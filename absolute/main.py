@@ -16,9 +16,12 @@ from dataclasses import dataclass
 from enum import Enum
 from collections import Counter
 
+
 import string
 import random
+import datetime
 # import re
+
 
 # from Bio.Seq import Seq
 import dnachisel as dc
@@ -295,7 +298,26 @@ def antibody_identification(fabulous_ab, debug=False, ):
 
 
 
-def optimize(ab, species='homo sapiens', debug=False, ):
+def optimize(ab, species='h_sapiens', debug=False, ):
+    sequence = ab.sequence
+
+    optimize = dc.DnaOptimizationProblem(sequence=sequence, constraints=[dc.EnforceTranslation(), 
+                                                        dc.EnforceGCContent(maxi=0.56), 
+                                                        dc.EnforceGCContent(maxi=0.64, window=60), 
+                                                        dc.UniquifyAllKmers(10), ], 
+                                            logger=None,
+                                            objectives=[dc.CodonOptimize(species=species)])
+    optimize.resolve_constraints(final_check=True)
+    optimize.optimize()
+
+    ab['optimized_vdj'] = optimize.sequence
+    ab['optimized_species'] = species
+    ab['optimizations'] = optimize.sequence_edits_as_array()
+    ab['optimizations_count'] = optimize.number_of_edits()
+    ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
+
+    ab['optimization_timestamp'] = str(datetime.datetime.now())
+
     return ab
 
 
@@ -582,24 +604,27 @@ def ids():
     return jsonify(results)
 
 
-@app.route('/optimize', methods=['GET', 'POST'])
+@app.route('/optimize', methods=['POST'])
 def optimize():
-    ab = request.get_json() or request.form
-    ab = optimize(ab)
+    data = request.get_json() or request.form
+    ab, species = data
+    ab = optimize(ab, species=species, )
     return ab
 
 
-@app.route('/clone', methods=['GET', 'POST'])
+@app.route('/clone', methods=['POST'])
 def clone():
-    ab = request.get_json() or request.form
-    ab = clone(ab)
+    data = request.get_json() or request.form
+    ab, vector = data
+    ab = clone(ab, vector)
     return ab
 
 
 @app.route('/number', methods=['POST'])
 def number():
-    ab = request.get_json() or request.form
-    ab = numbering(ab)
+    data = request.get_json() or request.form
+    ab, numbering_scheme = data
+    ab = numbering(ab, numbering_scheme)
     return ab
 
 
