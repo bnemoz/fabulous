@@ -255,10 +255,16 @@ def cleaner(sequence, pure_DNA=False, ):
 def antibody_identification(fabulous_ab, debug=False, ):
     """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
     
+    errors = []
+
     # Initial annotation with AbStar
     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
-    ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
-
+    try:
+        ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
+    except Exception as e:
+        errors.append(str(e))
+        return None, errors
+    
     # Adding Fab'ulous specific annotations to the AbStar output
     ab["input_type"] = fabulous_ab.input_type
     ab["fabulous_input"] = fabulous_ab.raw_input
@@ -267,10 +273,12 @@ def antibody_identification(fabulous_ab, debug=False, ):
         ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
     except:
         ab['chain'] = "Unknown"
+        errors.append("Chain could not be determined")
     try:
         ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
     except:
         ab['isotype'] = "Unknwon"
+        errors.append("Isotype could not be determined")
 
     # Calculating SHM 
     ab['SHM_v_nt'] = (1 - ab['v_identity']) * 100
@@ -281,8 +289,9 @@ def antibody_identification(fabulous_ab, debug=False, ):
     else:
         ab['SHM_vj_nt'] = None
         ab['SHM_vj_aa'] = None
+        errors.append("SHM VJ could not be calculated")
 
-    return ab
+    return ab, errors
 
 
 
@@ -536,13 +545,13 @@ def id():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     try:
-        result = antibody_identification(preprocessed, debug=False)
+        result, errors = antibody_identification(preprocessed, debug=False)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
     # Return the results in a consistent format
     if result:
-        return jsonify(dict(result))  # Convert the dictionary to JSON for the response
+        return jsonify(dict(result), dict(errors))  # Convert the dictionary to JSON for the response
     else:
         return jsonify({"error": "No results found"}), 400
     
