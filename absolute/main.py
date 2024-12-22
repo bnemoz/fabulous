@@ -546,7 +546,9 @@ def id():
         return jsonify({"error": str(e)}), 400
     try:
         result, errors = antibody_identification(preprocessed, debug=False)
-        print(errors)
+        if errors:
+            for err in errors:
+                print(f"Ecountered this error:{err}")
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
