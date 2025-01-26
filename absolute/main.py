@@ -283,7 +283,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     ab["fabulous_input"] = fabulous_ab.raw_input
 
     try:
-        ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL'
+        ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
     except:
         ab['chain'] = "Unknown"
         errors.append("Chain could not be determined")
