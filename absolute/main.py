@@ -405,8 +405,12 @@ def bill():
     data = request.get_json() or request.form
     userid = data.get('userid')
     authtoken = data.get('authtoken')
-    bill = get_bill(userid)
-    return bill
+    if not authenticate(userid, authtoken):
+        return jsonify({"error": "Invalid or missing authentication"}), 400
+    else:
+        bill = get_bill(userid)
+        return bill
+
 
 
 
