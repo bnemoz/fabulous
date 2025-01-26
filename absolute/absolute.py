@@ -457,18 +457,30 @@ def single_humanize(ab, temp:float = 1.25, debug=False, ):
     h_tool = HumanizationTool()
     original = ab['sequence']
 
-    score, mutations, humanized = h_tool.suggest_mutations(original, 
-                                                     excluded_positions = [],
-                                                     s_thresh = temp,
-                                                    )
-    # aln = alignment.semiglobal_alignment(original, humanized)
-    percent_change = round(len(mutations)/len(humanized) * 100, 2)
+    try:
+        score, mutations, humanized = h_tool.suggest_mutations(original, 
+                                                        excluded_positions = [],
+                                                        s_thresh = float(temp),
+                                                        )
+        # aln = alignment.semiglobal_alignment(original, humanized)
+        percent_change = round(len(mutations)/len(humanized) * 100, 2)
 
-    ab['humanized'] = humanized
-    ab['humanization_score'] = score
-    ab['humanization_mutations'] = mutations
-    ab['humanization_percent_change'] = percent_change
+        ab['humanized'] = humanized
+        ab['humanization_score'] = score
+        ab['humanization_mutations'] = mutations
+        ab['humanization_percent_change'] = percent_change
 
+        if debug:
+            print(f"Score: {score}")
+            print(f"Percent change: {percent_change}")
+    except Exception as e:
+        ab['humanized'] = None
+        ab['humanization_score'] = None
+        ab['humanization_mutations'] = None
+        ab['humanization_percent_change'] = None
+        if debug:
+            print(e)
+            
     return ab
 
 
