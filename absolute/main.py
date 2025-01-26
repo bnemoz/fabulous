@@ -524,7 +524,7 @@ def abnotator(ab, debug=False, ):
     return ab
 
 
-def humanize(ab, knob:float = 1.25, debug=False, ):
+def single_humanize(ab, temp:float = 1.25, debug=False, ):
 
     h_tool = HumanizationTool()
     original = ab['sequence']
@@ -542,6 +542,11 @@ def humanize(ab, knob:float = 1.25, debug=False, ):
     ab['humanization_percent_change'] = percent_change
 
     return ab
+
+
+def multi_humanize(sequence, oracles, iterations, seq_per_it, final_output, mutables_fwr, mutables_cdr, debug=False, ):
+
+    return sequence
 
 
 
@@ -740,17 +745,89 @@ def phylogeny():
     return data
 
 
+# @app.route('/humanize', methods=['POST'])
+# def _humanize():
+#     raw = request.get_json() or request.form
+#     header, data = raw
+#     ab = data.get('antibody')
+#     knob = data.get('knob', 1.25)
+#     userid = header.get('userid')
+#     authtoken = header.get('authtoken')
+#     ab = humanize(ab, knob=knob)
+#     billing(user=userid, token=authtoken, app='humanize')
+#     return ab
+
+
 @app.route('/humanize', methods=['POST'])
-def _humanize():
-    raw = request.get_json() or request.form
-    header, data = raw
-    ab = data.get('antibody')
-    knob = data.get('knob', 1.25)
-    userid = header.get('userid')
-    authtoken = header.get('authtoken')
-    ab = humanize(ab, knob=knob)
-    billing(user=userid, token=authtoken, app='humanize')
-    return ab
+def humanize():
+    # Parse the input payload
+    payload = request.get_json() or request.form
+    if not payload:
+        return jsonify({"error": "Invalid or missing payload"}), 400
+
+    userid = payload.get('userid')
+    authtoken = payload.get('authtoken')
+    model = payload.get('model')
+    debug = payload.get('debug', False)
+
+    if model == "single":
+        # Extract relevant data for single model
+        temp = payload.get('temp')
+        sequence_data = payload.get('sequence')
+        
+        if not sequence_data or not isinstance(sequence_data, dict):
+            return jsonify({"error": "Invalid or missing 'sequence' for single model"}), 400
+
+        sequence_id = sequence_data.get('sequence_id')
+        sequence = sequence_data.get('sequence')
+        species = sequence_data.get('species', 'Mouse')  # Default species
+
+        # Perform single humanization
+        try:
+            ab = single_humanize(sequence=sequence, temp=temp, debug=debug)
+            billing(user=userid, token=authtoken, app='humanize_single')
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    elif model == "multi":
+        # Extract relevant data for multi model
+        oracles = payload.get('oracles')
+        iterations = payload.get('iterations')
+        seq_per_it = payload.get('seqs_per_it')
+        final_output = payload.get('final_output')
+        mutables_fwr = payload.get('mutables_fwr')
+        mutables_cdr = payload.get('mutables_cdr')
+        initiation_data = payload.get('initiation')
+
+        if not initiation_data or not isinstance(initiation_data, dict):
+            return jsonify({"error": "Invalid or missing 'initiation' for multi model"}), 400
+
+        sequence_id = initiation_data.get('sequence_id')
+        sequence = initiation_data.get('sequence')
+        species = initiation_data.get('species', 'Chimpanzee')  # Default species
+
+        # Perform multi humanization
+        try:
+            ab = multi_humanize(
+                sequence=initiation_data,
+                oracles=oracles,
+                iterations=iterations,
+                seq_per_it=seq_per_it,
+                final_output=final_output,
+                mutables_fwr=mutables_fwr,
+                mutables_cdr=mutables_cdr,
+                debug=debug
+            )
+            billing(user=userid, token=authtoken, app='humanize_multi')
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    else:
+        return jsonify({"error": "Invalid model type. Must be 'single' or 'multi'"}), 400
+
+    # Return the results
+    return jsonify({"result": ab}), 200
+
 
 
 @app.route("/graphql", methods=["POST"])
