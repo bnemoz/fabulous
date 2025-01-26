@@ -38,7 +38,7 @@ import subprocess as sp
 import abstar
 
 
-from .absolute import billing
+from absolute import billing
 
 
 

@@ -108,48 +108,6 @@ class FabulousAb:
         return (self.name+'\n'+self.input_type)
 
 
-# Define GraphQL schema
-type_defs = """
-    type Query {
-        hello: String!
-        antibody(sequence_id: String!, sequence: String!, species: String = "human"): Antibody!
-    }
-
-    type Antibody {
-        sequence_id: String!
-        raw_input: String!
-        input_type: String!
-        formatted_input: String!
-        species: String!
-    }
-"""
-
-# Create resolvers
-query = QueryType()
-
-@query.field("hello")
-def resolve_hello(*_):
-    return "Hello, GraphQL!"
-
-@query.field("antibody")
-def resolve_antibody(_, info, sequence_id, sequence, species="human"):
-    try:
-        preprocessed = preprocessing(sequence_id, sequence, species=species)
-        result = antibody_identification(preprocessed)
-        return {
-            "sequence_id": sequence_id,
-            "raw_input": preprocessed.raw_input,
-            "input_type": str(preprocessed.input_type),
-            "formatted_input": preprocessed.formatted_input,
-            "species": species,
-        }
-    except Exception as e:
-        raise Exception(f"Error processing antibody: {e}")
-
-# Create executable schema
-schema = make_executable_schema(type_defs, query)
-
-
 
 
 #############################################################################################################
