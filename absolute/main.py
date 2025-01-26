@@ -782,7 +782,8 @@ def humanize():
         sequence = sequence_data.get('sequence')
         species = sequence_data.get('species', 'Mouse')  # Default species
 
-        ab = preprocessing(sequence_id, sequence, species=species)
+        ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
+        ab = antibody_identification(ab, debug=debug)
 
         # Perform single humanization
         try:
@@ -808,8 +809,9 @@ def humanize():
         sequence = initiation_data.get('sequence')
         species = initiation_data.get('species', 'Chimpanzee')  # Default species
 
-        ab = preprocessing(sequence_id, sequence, species=species)
-
+        ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
+        ab = antibody_identification(ab, debug=debug)
+        
         # Perform multi humanization
         try:
             ab = multi_humanize(
