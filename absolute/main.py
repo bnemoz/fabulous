@@ -315,7 +315,7 @@ def phylogeny():
 
 
 @app.route('/tree', methods=['POST'])
-def phylogeny():
+def tree():
     data = request.get_json() or request.form
     tree = build_tree(data, )
     return tree
