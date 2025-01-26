@@ -194,6 +194,8 @@ def id():
     # Return the results in a consistent format
     if result:
         billing(user=userid, token=authtoken, app='Identification (single)')
+        if debug:
+            return jsonify({"result": dict(result), "errors": errors})
         return jsonify({"results":dict(result)})
     else:
         return jsonify({"Single Identification App error": "No results found (Fab'ulous Id App)"}), 400
@@ -355,6 +357,10 @@ def humanize():
             billing(user=userid, token=authtoken, app='Humanize (single)')
         except Exception as e:
             return jsonify({"Single Humanization App error": str(e)}), 500
+        if debug:
+            return jsonify({"result": ab.annotations, "errors": errors}), 200
+        else:
+            return jsonify({"result": ab.annotations}), 200
 
     elif model == "multi":
         # Extract relevant data for multi model
