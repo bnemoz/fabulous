@@ -611,11 +611,13 @@ def ids():
 
     if preprocessed is not None:
         for n, _item in enumerate(preprocessed):
-            ab = antibody_identification(_item, debug=False)
+            ab, errors = antibody_identification(_item, debug=False)
+            if errors:
+                for err in errors:
+                    print(f"Ecountered this error:{err}")
             results[n] = ab
 
-    if results != {}:
-
+    if results != {}:            
         return jsonify({"results":dict(results)})
     else:
         return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
