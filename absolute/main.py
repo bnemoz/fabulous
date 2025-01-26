@@ -782,9 +782,11 @@ def humanize():
         sequence = sequence_data.get('sequence')
         species = sequence_data.get('species', 'Mouse')  # Default species
 
+        ab = preprocessing(sequence_id, sequence, species=species)
+
         # Perform single humanization
         try:
-            ab = single_humanize(sequence=sequence, temp=temp, debug=debug)
+            ab = single_humanize(ab=ab, temp=temp, debug=debug)
             billing(user=userid, token=authtoken, app='humanize_single')
         except Exception as e:
             return jsonify({"error": str(e)}), 500
@@ -806,10 +808,12 @@ def humanize():
         sequence = initiation_data.get('sequence')
         species = initiation_data.get('species', 'Chimpanzee')  # Default species
 
+        ab = preprocessing(sequence_id, sequence, species=species)
+
         # Perform multi humanization
         try:
             ab = multi_humanize(
-                sequence=initiation_data,
+                sequence=ab,
                 oracles=oracles,
                 iterations=iterations,
                 seq_per_it=seq_per_it,
