@@ -595,39 +595,87 @@ def id():
         return jsonify({"error": "No results found (Fab'ulous Id App)"}), 400
     
 
+# @app.route('/ids', methods=['POST'])
+# def ids():
+#     data = request.get_json() or request.form
+
+#     preprocessed = []
+
+#     for n in data:
+#         obj = data[n]
+#         sequence_id = obj.get('sequence_id')
+#         sequence = obj.get('sequence')
+#         species = obj.get('species', 'human')
+#         userid = data.get('userid')
+#         authtoken = data.get('authtoken')
+#         debug = data.get('debug', False)
+
+#         ab = preprocessing(sequence_id, sequence, species=species)
+#         billing(user=userid, token=authtoken, app='ids')
+#         preprocessed.append(ab)
+
+#     results = {}
+
+#     if preprocessed is not None:
+#         for n, _item in enumerate(preprocessed):
+#             ab, errors = antibody_identification(_item, debug=debug)
+#             if errors and debug:
+#                 for err in errors:
+#                     print(f"Ecountered this error:{err}")
+#             results[n] = ab
+
+#     if results != {}:            
+#         return jsonify({"results":dict(results)})
+#     else:
+#         return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
+
+
 @app.route('/ids', methods=['POST'])
 def ids():
-    data = request.get_json() or request.form
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON payload"}), 400
 
-    preprocessed = []
+    userid = data.get('userid')
+    authtoken = data.get('authtoken')
+    debug = data.get('debug', False)
+    sequences = data.get('sequences')
 
-    for n in data:
-        obj = data[n]
-        sequence_id = obj.get('sequence_id')
-        sequence = obj.get('sequence')
-        species = obj.get('species', 'human')
-        userid = data.get('userid')
-        authtoken = data.get('authtoken')
-        debug = data.get('debug', False)
-
-        ab = preprocessing(sequence_id, sequence, species=species)
-        billing(user=userid, token=authtoken, app='ids')
-        preprocessed.append(ab)
+    if not sequences or not isinstance(sequences, dict):
+        return jsonify({"error": "Invalid or missing 'sequences' field"}), 400
 
     results = {}
+    errors = []
+    for seq_id, seq_data in sequences.items():
+        sequence_id = seq_data.get('sequence_id')
+        sequence = seq_data.get('sequence')
+        species = seq_data.get('species', 'human')  # Default to 'human'
 
-    if preprocessed is not None:
-        for n, _item in enumerate(preprocessed):
-            ab, errors = antibody_identification(_item, debug=debug)
-            if errors and debug:
-                for err in errors:
-                    print(f"Ecountered this error:{err}")
-            results[n] = ab
+        # Process the sequence
+        try:
+            preprocessed = preprocessing(sequence_id, sequence, species=species)
+        except Exception as e:
+            errors.append({"sequence_id": sequence_id, "error": str(e)})
+            continue
 
-    if results != {}:            
-        return jsonify({"results":dict(results)})
-    else:
-        return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
+        try:
+            result, seq_errors = antibody_identification(preprocessed, debug=debug)
+            if seq_errors and debug:
+                errors.extend([{"sequence_id": sequence_id, "error": err} for err in seq_errors])
+            results[seq_id] = result
+        except Exception as e:
+            errors.append({"sequence_id": sequence_id, "error": str(e)})
+
+    # Handle billing if successful
+    if results:
+        billing(user=userid, token=authtoken, app='ids')
+
+    response = {"results": results}
+    if errors and debug:
+        response["errors"] = errors
+
+    return jsonify(response), 200 if results else 400
+
 
 
 @app.route('/optimize', methods=['POST'])
