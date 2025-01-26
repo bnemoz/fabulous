@@ -270,7 +270,11 @@ def antibody_identification(fabulous_ab, debug=False, ):
     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
     try:
         ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
+        if debug:
+            print(datetime.datetime.now(), "AbStar run successful")
     except Exception as e:
+        if debug:
+            print(datetime.datetime.now(), "AbStar error: ", e)
         errors.append(str(e))
         return None, errors
     
@@ -279,7 +283,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     ab["fabulous_input"] = fabulous_ab.raw_input
 
     try:
-        ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
+        ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL'
     except:
         ab['chain'] = "Unknown"
         errors.append("Chain could not be determined")
@@ -563,6 +567,7 @@ def id():
         species = data.get('species', 'human')  # Default to "human" if not provided
         userid = data.get('userid')
         authtoken = data.get('authtoken')
+        debug = data.get('debug', False)
     else:
         # For GET requests, use query parameters
         sequence_id = request.args.get('sequence_id')
@@ -575,8 +580,8 @@ def id():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     try:
-        result, errors = antibody_identification(preprocessed, debug=False)
-        if errors:
+        result, errors = antibody_identification(preprocessed, debug=debug)
+        if errors and debug:
             for err in errors:
                 print(f"Ecountered this error:{err}")
     except Exception as e:
@@ -603,6 +608,8 @@ def ids():
         species = obj.get('species', 'human')
         userid = data.get('userid')
         authtoken = data.get('authtoken')
+        debug = data.get('debug', False)
+
         ab = preprocessing(sequence_id, sequence, species=species)
         billing(user=userid, token=authtoken, app='ids')
         preprocessed.append(ab)
@@ -611,8 +618,8 @@ def ids():
 
     if preprocessed is not None:
         for n, _item in enumerate(preprocessed):
-            ab, errors = antibody_identification(_item, debug=False)
-            if errors:
+            ab, errors = antibody_identification(_item, debug=debug)
+            if errors and debug:
                 for err in errors:
                     print(f"Ecountered this error:{err}")
             results[n] = ab
