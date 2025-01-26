@@ -48,6 +48,7 @@ def get_bill(user):
     billing_file = os.path.join(billing_folder, f'billing_{user}.csv')
     if os.path.exists(billing_file):
         df = pd.read_csv(billing_file, sep='\t', header=None)
+        df.columns=["client ID","Auth token", "App", "Timestamp"]        
         return df
     else:
         return None
