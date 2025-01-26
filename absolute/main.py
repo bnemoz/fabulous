@@ -604,6 +604,7 @@ def ids():
         userid = data.get('userid')
         authtoken = data.get('authtoken')
         ab = preprocessing(sequence_id, sequence, species=species)
+        billing(user=userid, token=authtoken, app='ids')
         preprocessed.append(ab)
 
     results = []
@@ -614,8 +615,7 @@ def ids():
             results.append(ab)
 
     if results != []:
-        billing(user=userid, token=authtoken, app='ids')
-        return jsonify(results)
+        return results
     else:
         return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
 
