@@ -459,7 +459,7 @@ def single_humanize(ab, temp:float = 1.25, debug=False, ):
 
     score, mutations, humanized = h_tool.suggest_mutations(original, 
                                                      excluded_positions = [],
-                                                     s_thresh = knob,
+                                                     s_thresh = temp,
                                                     )
     # aln = alignment.semiglobal_alignment(original, humanized)
     percent_change = round(len(mutations)/len(humanized) * 100, 2)

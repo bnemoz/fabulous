@@ -193,7 +193,7 @@ def id():
 
     # Return the results in a consistent format
     if result:
-        billing(user=userid, token=authtoken, app='id')
+        billing(user=userid, token=authtoken, app='Identification (single)')
         return jsonify({"results":dict(result)})
     else:
         return jsonify({"error": "No results found (Fab'ulous Id App)"}), 400
@@ -236,7 +236,7 @@ def ids():
             # Extract the dictionary from result.annotations
             if hasattr(result, "annotations") and isinstance(result.annotations, dict):
                 results[seq_id] = result.annotations
-                billing(user=userid, token=authtoken, app='ids')
+                billing(user=userid, token=authtoken, app='Identification (Batch)')
             else:
                 errors.append({"sequence_id": sequence_id, "error": "Result annotations are missing or invalid"})
         except Exception as e:
@@ -259,7 +259,7 @@ def optimize():
     userid = header.get('userid')
     authtoken = header.get('authtoken')
     ab = optimize(ab, species=species, )
-    billing(user=userid, token=authtoken, app='optimize')
+    billing(user=userid, token=authtoken, app='Optimize')
     return ab
 
 
@@ -272,7 +272,7 @@ def clone():
     userid = header.get('userid')
     authtoken = header.get('authtoken')
     ab = clone(ab, vector)
-    billing(user=userid, token=authtoken, app='clone')
+    billing(user=userid, token=authtoken, app='Clone')
     return ab
 
 
@@ -285,7 +285,7 @@ def number():
     userid = header.get('userid')
     authtoken = header.get('authtoken')
     ab = numbering(ab, numbering_scheme)
-    billing(user=userid, token=authtoken, app='numbering')
+    billing(user=userid, token=authtoken, app='Numbering')
     return ab
 
 
@@ -352,7 +352,7 @@ def humanize():
         # Perform single humanization
         try:
             ab = single_humanize(ab=ab, temp=temp, debug=debug)
-            billing(user=userid, token=authtoken, app='humanize_single')
+            billing(user=userid, token=authtoken, app='Humanize (single)')
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -388,7 +388,7 @@ def humanize():
                 mutables_cdr=mutables_cdr,
                 debug=debug
             )
-            billing(user=userid, token=authtoken, app='humanize_multi')
+            billing(user=userid, token=authtoken, app='Humanize (multi)')
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
