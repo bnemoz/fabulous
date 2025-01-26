@@ -157,7 +157,7 @@ def cleaner(sequence, pure_DNA=False, ):
 
 @app.route('/', methods=['GET'])
 def index():
-    return "Welcome to the Antibody Identification API!"
+    return "Welcome to the Fab'ulous Antibody API!"
 
 
 
@@ -196,7 +196,7 @@ def id():
         billing(user=userid, token=authtoken, app='Identification (single)')
         return jsonify({"results":dict(result)})
     else:
-        return jsonify({"error": "No results found (Fab'ulous Id App)"}), 400
+        return jsonify({"Single Identification App error": "No results found (Fab'ulous Id App)"}), 400
     
 
 
@@ -240,7 +240,7 @@ def ids():
             else:
                 errors.append({"sequence_id": sequence_id, "error": "Result annotations are missing or invalid"})
         except Exception as e:
-            errors.append({"sequence_id": sequence_id, "error": str(e)})
+            errors.append({"sequence_id": sequence_id, "Batch Identification App error": str(e)})
         
 
     response = {"results": results}
@@ -354,7 +354,7 @@ def humanize():
             ab = single_humanize(ab=ab, temp=temp, debug=debug)
             billing(user=userid, token=authtoken, app='Humanize (single)')
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"Single Humanization App error": str(e)}), 500
 
     elif model == "multi":
         # Extract relevant data for multi model
@@ -390,7 +390,7 @@ def humanize():
             )
             billing(user=userid, token=authtoken, app='Humanize (multi)')
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            return jsonify({"Multi Humanize App error": str(e)}), 500
 
     else:
         return jsonify({"error": "Invalid model type. Must be 'single' or 'multi'"}), 400
@@ -407,7 +407,7 @@ def bill():
     authtoken = data.get('authtoken')
     
     if not authenticate(userid, authtoken):
-        return jsonify({"error": "Invalid or missing authentication"}), 400
+        return jsonify({"Authentification App error": "Invalid or missing authentication"}), 400
 
     try:
         bill_df = get_bill(userid)
@@ -416,7 +416,7 @@ def bill():
         bill_json = bill_df.to_dict(orient="records")  # Convert rows to a list of dictionaries
         return jsonify({"bill": bill_json}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"Authentification App error": str(e)}), 500
 
 
 
