@@ -347,7 +347,7 @@ def humanize():
         species = sequence_data.get('species', 'Mouse')  # Default species
 
         ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
-        ab = antibody_identification(ab, debug=debug)
+        ab, errors = antibody_identification(ab, debug=debug)
 
         # Perform single humanization
         try:
