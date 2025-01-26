@@ -596,7 +596,8 @@ def ids():
 
     preprocessed = []
 
-    for obj in data:
+    for n in data:
+        obj = data[n]
         sequence_id = obj.get('sequence_id')
         sequence = obj.get('sequence')
         species = obj.get('species', 'human')
