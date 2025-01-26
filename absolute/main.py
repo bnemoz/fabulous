@@ -662,19 +662,23 @@ def ids():
             result, seq_errors = antibody_identification(preprocessed, debug=debug)
             if seq_errors and debug:
                 errors.extend([{"sequence_id": sequence_id, "error": err} for err in seq_errors])
-            results[seq_id] = result
+
+            # Extract the dictionary from result.annotations
+            if hasattr(result, "annotations") and isinstance(result.annotations, dict):
+                results[seq_id] = result.annotations
+                billing(user=userid, token=authtoken, app='ids')
+            else:
+                errors.append({"sequence_id": sequence_id, "error": "Result annotations are missing or invalid"})
         except Exception as e:
             errors.append({"sequence_id": sequence_id, "error": str(e)})
-
-    # Handle billing if successful
-    if results:
-        billing(user=userid, token=authtoken, app='ids')
+        
 
     response = {"results": results}
     if errors and debug:
         response["errors"] = errors
 
     return jsonify(response), 200 if results else 400
+
 
 
 
