@@ -472,6 +472,22 @@ def single_humanize(ab, temp:float = 1.25, debug=False, ):
     return ab
 
 
+
 def multi_humanize(sequence, oracles, iterations, seq_per_it, final_output, mutables_fwr, mutables_cdr, debug=False, ):
 
     return sequence
+
+
+
+def get_clusters(data):
+    return
+
+
+
+def get_phylogeny(data):
+    return
+
+
+
+def build_tree(data):
+    return
