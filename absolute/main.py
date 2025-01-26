@@ -405,11 +405,18 @@ def bill():
     data = request.get_json() or request.form
     userid = data.get('userid')
     authtoken = data.get('authtoken')
+    
     if not authenticate(userid, authtoken):
         return jsonify({"error": "Invalid or missing authentication"}), 400
-    else:
-        bill = get_bill(userid)
-        return bill
+
+    try:
+        bill_df = get_bill(userid)
+
+        # Convert the DataFrame to JSON-compatible dictionary
+        bill_json = bill_df.to_dict(orient="records")  # Convert rows to a list of dictionaries
+        return jsonify({"bill": bill_json}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
