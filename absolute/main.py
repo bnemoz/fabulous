@@ -615,7 +615,7 @@ def ids():
             results[n] = ab
 
     if results != {}:
-        return jsonify(results)
+        return jsonify(dict(results))
     else:
         return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
 
