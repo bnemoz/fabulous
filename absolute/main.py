@@ -607,15 +607,15 @@ def ids():
         billing(user=userid, token=authtoken, app='ids')
         preprocessed.append(ab)
 
-    results = []
+    results = {}
 
     if preprocessed is not None:
-        for _item in preprocessed:
+        for n, _item in enumerate(preprocessed):
             ab = antibody_identification(_item, debug=False)
-            results.append(ab)
+            results[n] = ab
 
-    if results != []:
-        return results
+    if results != {}:
+        return jsonify(results)
     else:
         return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
 
