@@ -38,7 +38,7 @@ import subprocess as sp
 import abstar
 
 
-
+from .absolute import billing
 
 
 
@@ -182,10 +182,10 @@ schema = make_executable_schema(type_defs, query)
 #############################################################################################################
 
 
-def billing(user, token, app):
-    with open(f'/home/serveradmin/Apps/fabulous/billing/billing_{user}.csv', 'a') as f:
-        f.write(f"{user}\t{token}\t{app}\t{datetime.datetime.now()}\n")
-    return None
+# def billing(user, token, app):
+#     with open(f'/home/serveradmin/Apps/fabulous/billing/billing_{user}.csv', 'a') as f:
+#         f.write(f"{user}\t{token}\t{app}\t{datetime.datetime.now()}\n")
+#     return None
 
 
 def preprocessing(sequence_id, raw_input, species="human", debug=False):
@@ -811,7 +811,7 @@ def humanize():
 
         ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
         ab = antibody_identification(ab, debug=debug)
-        
+
         # Perform multi humanization
         try:
             ab = multi_humanize(
