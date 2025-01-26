@@ -34,7 +34,7 @@ import subprocess as sp
 
 
 billing_folder = '/home/serveradmin/Apps/fabulous/billing/'
-authentification_folder = '/home/serveradmin/Apps/fabulous/authentification/'
+authentification_folder = '/home/serveradmin/Apps/fabulous/authentication/'
 
 
 def billing(user, token, app):
