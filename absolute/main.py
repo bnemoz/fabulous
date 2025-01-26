@@ -14,7 +14,7 @@ from ariadne import QueryType, make_executable_schema, graphql_sync
 
 from dataclasses import dataclass
 from enum import Enum
-from collections import Counter
+# from collections import Counter
 
 
 import string
@@ -24,21 +24,22 @@ import datetime
 
 
 # from Bio.Seq import Seq
-import dnachisel as dc
-from abutils import Sequence
-from abutils.io import read_fasta
+# import dnachisel as dc
+# from abutils import Sequence
+# from abutils.io import read_fasta
 # from abutils.io import read_airr, list_files
-from abutils import alignment
+# from abutils import alignment
 # import antpack
-from antpack import SingleChainAnnotator
+# from antpack import SingleChainAnnotator
 # from antpack import PairedChainAnnotator
-from antpack import HumanizationTool
+# from antpack import HumanizationTool
 import abutils
-import subprocess as sp
-import abstar
+# import subprocess as sp
+# import abstar
 
 
-from absolute import billing
+from absolute import preprocessing, antibody_identification, optimize, clone, numbering, abnotator, single_humanize, multi_humanize
+from billing import billing, get_bill, authenticate
 
 
 
@@ -68,35 +69,35 @@ cors = CORS(app,
 #############################################################################################################
 
 
-# Seamless cloning sequences:
-oh_5 = {'IGH': 'gctgggttttccttgttgctattctcgagggtgtccagtgt',
-        'IGK': 'atcctttttctagtagcaactgcaaccggtgtacac',
-        'IGL': 'atcctttttctagtagcaactgcaaccggtgtacac'}
-oh_3 = {'IGH': 'gctagcaccaagggcccatcggtcttcc',
-        'IGK': 'cgtacggtggctgcaccatctgtcttcatc',
-        'IGL': 'ggtcagcccaaggctgccccctcggtcactctgttcccgccctcgagtgaggagcttcaagccaacaaggcc'}
+# # Seamless cloning sequences:
+# oh_5 = {'IGH': 'gctgggttttccttgttgctattctcgagggtgtccagtgt',
+#         'IGK': 'atcctttttctagtagcaactgcaaccggtgtacac',
+#         'IGL': 'atcctttttctagtagcaactgcaaccggtgtacac'}
+# oh_3 = {'IGH': 'gctagcaccaagggcccatcggtcttcc',
+#         'IGK': 'cgtacggtggctgcaccatctgtcttcatc',
+#         'IGL': 'ggtcagcccaaggctgccccctcggtcactctgttcccgccctcgagtgaggagcttcaagccaacaaggcc'}
 
-# Full length signal/leader sequences:
-leader_nt = {'IGH': 'ATGGAACTGGGGCTCCGCTGGGTTTTCCTTGTTGCTATTCTCGAGGGTGTCCAGTGT',
-             'IGK': 'ATGGGTTGGTCATGTATCATCCTTTTTCTAGTAGCAACTGCAACCGGTGTACAC',
-             'IGL': 'ATGGGTTGGTCATGTATCATCCTTTTTCTAGTAGCAACTGCAACCGGT'}
-leader_aa = {'IGH': 'MELGLRWVFLVAILEGVQC',
-             'IGK': 'MGWSCIILFLVATATGVH',
-             'IGL': 'MGWSCIILFLVATATG'}
+# # Full length signal/leader sequences:
+# leader_nt = {'IGH': 'ATGGAACTGGGGCTCCGCTGGGTTTTCCTTGTTGCTATTCTCGAGGGTGTCCAGTGT',
+#              'IGK': 'ATGGGTTGGTCATGTATCATCCTTTTTCTAGTAGCAACTGCAACCGGTGTACAC',
+#              'IGL': 'ATGGGTTGGTCATGTATCATCCTTTTTCTAGTAGCAACTGCAACCGGT'}
+# leader_aa = {'IGH': 'MELGLRWVFLVAILEGVQC',
+#              'IGK': 'MGWSCIILFLVATATGVH',
+#              'IGL': 'MGWSCIILFLVATATG'}
 
-# Isotype dictionary:
-isotypes = {'IGHG1': 'IgG1',
-            'IGHG2': 'IgG2',
-            'IGHG3': 'IgG3',
-            'IGHG4': 'IgG4',
-            'IGHE': 'IgE',
-            'IGHA1': 'IgA1',
-            'IGHA2': 'IgA2',
-            'IGHM': 'IgM',
-            'IGHD': 'IgD',
-            'IGK': 'kappa',
-            'IGL': 'lambda'
-            }
+# # Isotype dictionary:
+# isotypes = {'IGHG1': 'IgG1',
+#             'IGHG2': 'IgG2',
+#             'IGHG3': 'IgG3',
+#             'IGHG4': 'IgG4',
+#             'IGHE': 'IgE',
+#             'IGHA1': 'IgA1',
+#             'IGHA2': 'IgA2',
+#             'IGHM': 'IgM',
+#             'IGHD': 'IgD',
+#             'IGK': 'kappa',
+#             'IGL': 'lambda'
+#             }
 
 
 class InputType(Enum):
@@ -188,64 +189,64 @@ schema = make_executable_schema(type_defs, query)
 #     return None
 
 
-def preprocessing(sequence_id, raw_input, species="human", debug=False):
-    """Pre-processes the input to figure out input type (raw unformatted, single-FASTA or multi-FASTA) and the origin (nucleotides/DNA or amino-acids/proteins)
-    Formats the input into a suitable format (a list of FabulousAb dataclass instances) for the downstream analysis"""
+# def preprocessing(sequence_id, raw_input, species="human", debug=False):
+#     """Pre-processes the input to figure out input type (raw unformatted, single-FASTA or multi-FASTA) and the origin (nucleotides/DNA or amino-acids/proteins)
+#     Formats the input into a suitable format (a list of FabulousAb dataclass instances) for the downstream analysis"""
     
-    # input_seq_type = infer_input(raw_input)
-    # if debug:
-    #     print(input_seq_type)
+#     # input_seq_type = infer_input(raw_input)
+#     # if debug:
+#     #     print(input_seq_type)
         
-    # _seq = str(raw_input).replace(" ", "").replace("-", "").replace("\n","")
+#     # _seq = str(raw_input).replace(" ", "").replace("-", "").replace("\n","")
 
-    residue_type = infer_residues(raw_input, )
-    if debug:
-        print(residue_type)
+#     residue_type = infer_residues(raw_input, )
+#     if debug:
+#         print(residue_type)
     
-    if residue_type == 'protein':
-        formatted_input = reverse_translate(raw_input, )
-    elif residue_type == 'DNA':
-        formatted_input = raw_input
+#     if residue_type == 'protein':
+#         formatted_input = reverse_translate(raw_input, )
+#     elif residue_type == 'DNA':
+#         formatted_input = raw_input
 
-    ab = FabulousAb(name=sequence_id, raw_input=raw_input, input_type=residue_type, formatted_input=formatted_input, species=species)
-    return ab
-
-
-def infer_input(sequence, ):
-    """Infer the input format of a sequence: unformatted, single fasta, or multi fasta."""
-    _input = str(sequence)
-    carret_count = _input.count('>')
-    if carret_count == 0:
-        return 'unformatted sequence'
-    elif carret_count == 1:
-        return 'single fasta'
-    elif carret_count >= 2:
-        return 'multi fasta'
+#     ab = FabulousAb(name=sequence_id, raw_input=raw_input, input_type=residue_type, formatted_input=formatted_input, species=species)
+#     return ab
 
 
-def generate_random_label(length=8):
-    """Generate a random label of a specified length."""
-    letters = string.ascii_letters + string.digits
-    return ''.join(random.choice(letters) for _ in range(length))
+# def infer_input(sequence, ):
+#     """Infer the input format of a sequence: unformatted, single fasta, or multi fasta."""
+#     _input = str(sequence)
+#     carret_count = _input.count('>')
+#     if carret_count == 0:
+#         return 'unformatted sequence'
+#     elif carret_count == 1:
+#         return 'single fasta'
+#     elif carret_count >= 2:
+#         return 'multi fasta'
 
 
-def infer_residues(sequence, ):
-    """Infer the rersidue type of a sequence: DNA or protein."""
-    _input = str(sequence)
-    letters = set([l.lower() for l in _input])
-    if len(letters) < 6:
-        return "DNA"
-    elif len(letters) > 10:
-        return "protein"
+# def generate_random_label(length=8):
+#     """Generate a random label of a specified length."""
+#     letters = string.ascii_letters + string.digits
+#     return ''.join(random.choice(letters) for _ in range(length))
 
 
-def reverse_translate(sequence, ):
-    """Returns the reverse translated sequence (NT) of an input amino acid sequence."""
-    try:
-        dna = dc.reverse_translate(sequence, randomize_codons=True, table='Standard')
-        return dna
-    except:
-        return None
+# def infer_residues(sequence, ):
+#     """Infer the rersidue type of a sequence: DNA or protein."""
+#     _input = str(sequence)
+#     letters = set([l.lower() for l in _input])
+#     if len(letters) < 6:
+#         return "DNA"
+#     elif len(letters) > 10:
+#         return "protein"
+
+
+# def reverse_translate(sequence, ):
+#     """Returns the reverse translated sequence (NT) of an input amino acid sequence."""
+#     try:
+#         dna = dc.reverse_translate(sequence, randomize_codons=True, table='Standard')
+#         return dna
+#     except:
+#         return None
 
 
 def cleaner(sequence, pure_DNA=False, ):
@@ -261,292 +262,292 @@ def cleaner(sequence, pure_DNA=False, ):
 
 
 
-def antibody_identification(fabulous_ab, debug=False, ):
-    """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
+# def antibody_identification(fabulous_ab, debug=False, ):
+#     """Identify the antibody germline and CDRs using AbStar. Return the results as a Sequence object with annotations in a JSON dictionnary. Also encodes several key/values important for optimization and cloning"""
     
-    errors = []
+#     errors = []
 
-    # Initial annotation with AbStar
-    _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
-    try:
-        ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
-        if debug:
-            print(datetime.datetime.now(), "AbStar run successful")
-    except Exception as e:
-        if debug:
-            print(datetime.datetime.now(), "AbStar error: ", e)
-        errors.append(str(e))
-        return None, errors
+#     # Initial annotation with AbStar
+#     _seq = Sequence(fabulous_ab.formatted_input, id=fabulous_ab.name)
+#     try:
+#         ab = abstar.run(_seq, germline_database=fabulous_ab.species, verbose=debug)
+#         if debug:
+#             print(datetime.datetime.now(), "AbStar run successful")
+#     except Exception as e:
+#         if debug:
+#             print(datetime.datetime.now(), "AbStar error: ", e)
+#         errors.append(str(e))
+#         return None, errors
     
-    # Adding Fab'ulous specific annotations to the AbStar output
-    ab["input_type"] = fabulous_ab.input_type
-    ab["fabulous_input"] = fabulous_ab.raw_input
+#     # Adding Fab'ulous specific annotations to the AbStar output
+#     ab["input_type"] = fabulous_ab.input_type
+#     ab["fabulous_input"] = fabulous_ab.raw_input
 
-    try:
-        ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
-    except:
-        ab['chain'] = "Unknown"
-        errors.append("Chain could not be determined")
-    try:
-        ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
-    except:
-        ab['isotype'] = "Unknwon"
-        errors.append("Isotype could not be determined")
+#     try:
+#         ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
+#     except:
+#         ab['chain'] = "Unknown"
+#         errors.append("Chain could not be determined")
+#     try:
+#         ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
+#     except:
+#         ab['isotype'] = "Unknwon"
+#         errors.append("Isotype could not be determined")
 
-    # Calculating SHM 
-    ab['SHM_v_nt'] = (1 - ab['v_identity']) * 100
-    ab['SHM_v_aa'] = (1 - ab['v_identity_aa']) * 100
-    if ab['j_identity'] is not None:
-        ab['SHM_vj_nt'] = ((1 - ab['vj_identity']) + (1 - ab['j_identity'])) * 100
-        ab['SHM_vj_aa'] = ((1 - ab['vj_identity_aa']) + (1 - ab['j_identity_aa'])) * 100
-    else:
-        ab['SHM_vj_nt'] = None
-        ab['SHM_vj_aa'] = None
-        errors.append("SHM VJ could not be calculated")
+#     # Calculating SHM 
+#     ab['SHM_v_nt'] = (1 - ab['v_identity']) * 100
+#     ab['SHM_v_aa'] = (1 - ab['v_identity_aa']) * 100
+#     if ab['j_identity'] is not None:
+#         ab['SHM_vj_nt'] = ((1 - ab['vj_identity']) + (1 - ab['j_identity'])) * 100
+#         ab['SHM_vj_aa'] = ((1 - ab['vj_identity_aa']) + (1 - ab['j_identity_aa'])) * 100
+#     else:
+#         ab['SHM_vj_nt'] = None
+#         ab['SHM_vj_aa'] = None
+#         errors.append("SHM VJ could not be calculated")
 
-    return ab, errors
-
-
-
-def optimize(ab, species='h_sapiens', debug=False, ):
-    sequence = ab.sequence
-
-    optimize = dc.DnaOptimizationProblem(sequence=sequence, constraints=[dc.EnforceTranslation(), 
-                                                        dc.EnforceGCContent(maxi=0.56), 
-                                                        dc.EnforceGCContent(maxi=0.64, window=60), 
-                                                        dc.UniquifyAllKmers(10), ], 
-                                            logger=None,
-                                            objectives=[dc.CodonOptimize(species=species)])
-    optimize.resolve_constraints(final_check=True)
-    optimize.optimize()
-
-    ab['optimized_vdj'] = optimize.sequence
-    ab['optimized_species'] = species
-    ab['optimizations'] = optimize.sequence_edits_as_array()
-    ab['optimizations_count'] = optimize.number_of_edits()
-    ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
-
-    ab['optimization_timestamp'] = str(datetime.datetime.now())
-
-    return ab
+#     return ab, errors
 
 
-def clone(ab, debug=False, ):
-    # To-Do
-    return ab
+
+# def optimize(ab, species='h_sapiens', debug=False, ):
+#     sequence = ab.sequence
+
+#     optimize = dc.DnaOptimizationProblem(sequence=sequence, constraints=[dc.EnforceTranslation(), 
+#                                                         dc.EnforceGCContent(maxi=0.56), 
+#                                                         dc.EnforceGCContent(maxi=0.64, window=60), 
+#                                                         dc.UniquifyAllKmers(10), ], 
+#                                             logger=None,
+#                                             objectives=[dc.CodonOptimize(species=species)])
+#     optimize.resolve_constraints(final_check=True)
+#     optimize.optimize()
+
+#     ab['optimized_vdj'] = optimize.sequence
+#     ab['optimized_species'] = species
+#     ab['optimizations'] = optimize.sequence_edits_as_array()
+#     ab['optimizations_count'] = optimize.number_of_edits()
+#     ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
+
+#     ab['optimization_timestamp'] = str(datetime.datetime.now())
+
+#     return ab
 
 
-def numbering(ab, scheme, algo='anarci', debug=False, ):
-    if algo == 'anarci':
-        ab['numbering'] = {}
-        ab['numbering'][scheme] = anarci_wrap(ab, scheme, debug)
-        return ab
-    elif algo == 'antpack':
-        ab['numbering'] = {}
-        ab['numbering'][scheme] = antpack_wrap(ab, scheme, debug)
-        return ab
+# def clone(ab, debug=False, ):
+#     # To-Do
+#     return ab
 
 
-def anarci_wrap(ab, numbering_scheme='IMGT', debug=False):
-    scheme_dict = {'IMGT':'i',
-                   'kabat':'k',
-                   'chothia':'c',
-                   'Martin':'m',
-                   'Aho':'a',
-                   'Wolfguy':'w',
-                   }
-    cmd = f"ANARCI -i {ab['sequence']} --scheme {scheme_dict[numbering_scheme]} --hmmerpath /home/serveradmin/antibody/.venv/bin"
-    anarci_cmd = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
-    stdout, stderr = anarci_cmd.communicate()
-    if debug:
-        return stdout
-    else:
-        raw = stdout.splitlines()[7:-1]
-        numbering = {}
-        try:
-            for i, e in enumerate(raw):
-                elems = e.split(' ')
-                numbering[i] = [elems[1], elems[-1]]
-        except TypeError:
-            numbering = "Sorry :-/ Numbering scheme cannot be assessed"
-        return numbering
+# def numbering(ab, scheme, algo='anarci', debug=False, ):
+#     if algo == 'anarci':
+#         ab['numbering'] = {}
+#         ab['numbering'][scheme] = anarci_wrap(ab, scheme, debug)
+#         return ab
+#     elif algo == 'antpack':
+#         ab['numbering'] = {}
+#         ab['numbering'][scheme] = antpack_wrap(ab, scheme, debug)
+#         return ab
 
 
-def antpack_wrap(ab, numbering_scheme='IMGT', debug=False):
-    scheme_dict = {'IMGT':'imgt',
-                   'kabat':'kabat',
-                   'Martin':'martin',
-                   'Aho':'aho',
-                   }
+# def anarci_wrap(ab, numbering_scheme='IMGT', debug=False):
+#     scheme_dict = {'IMGT':'i',
+#                    'kabat':'k',
+#                    'chothia':'c',
+#                    'Martin':'m',
+#                    'Aho':'a',
+#                    'Wolfguy':'w',
+#                    }
+#     cmd = f"ANARCI -i {ab['sequence']} --scheme {scheme_dict[numbering_scheme]} --hmmerpath /home/serveradmin/antibody/.venv/bin"
+#     anarci_cmd = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE, shell=True, universal_newlines=True)
+#     stdout, stderr = anarci_cmd.communicate()
+#     if debug:
+#         return stdout
+#     else:
+#         raw = stdout.splitlines()[7:-1]
+#         numbering = {}
+#         try:
+#             for i, e in enumerate(raw):
+#                 elems = e.split(' ')
+#                 numbering[i] = [elems[1], elems[-1]]
+#         except TypeError:
+#             numbering = "Sorry :-/ Numbering scheme cannot be assessed"
+#         return numbering
+
+
+# def antpack_wrap(ab, numbering_scheme='IMGT', debug=False):
+#     scheme_dict = {'IMGT':'imgt',
+#                    'kabat':'kabat',
+#                    'Martin':'martin',
+#                    'Aho':'aho',
+#                    }
     
-    if numbering_scheme not in scheme_dict.keys():
-        return "Sorry :-/ Numbering scheme not supported"
+#     if numbering_scheme not in scheme_dict.keys():
+#         return "Sorry :-/ Numbering scheme not supported"
     
-    sequence = ab['sequence_aa']
-    chain = 'H' if ab['locus'] == 'heavy' else 'K' if ab['locus'] == 'kappa' else 'L'
-    sc_annotator = SingleChainAnnotator([chain, ], scheme = scheme_dict[numbering_scheme])
-    numbered, percent_identity, chain_type, err_message = sc_annotator.analyze_seq(sequence)
-    try:
-        output = [(a,z) for a,z in zip(numbered, sequence)]
-    except:
-        output = err_message
+#     sequence = ab['sequence_aa']
+#     chain = 'H' if ab['locus'] == 'heavy' else 'K' if ab['locus'] == 'kappa' else 'L'
+#     sc_annotator = SingleChainAnnotator([chain, ], scheme = scheme_dict[numbering_scheme])
+#     numbered, percent_identity, chain_type, err_message = sc_annotator.analyze_seq(sequence)
+#     try:
+#         output = [(a,z) for a,z in zip(numbered, sequence)]
+#     except:
+#         output = err_message
 
-    return output
+#     return output
 
-def longest_substring(string):
-    longest = ""
-    for i in range(len(string)):
-        for j in range(i + 3, len(string) + 1, 3):
-            substring = string[i:j]
-            if len(substring) > len(longest):
-                longest = substring
-    return longest    
+# def longest_substring(string):
+#     longest = ""
+#     for i in range(len(string)):
+#         for j in range(i + 3, len(string) + 1, 3):
+#             substring = string[i:j]
+#             if len(substring) > len(longest):
+#                 longest = substring
+#     return longest    
 
 
-def assign5prime(ab):
-    leaders = read_fasta('./refs/L.fasta')
-    alns = alignment.semiglobal_alignment(query=ab['leader'], targets=leaders)
-    maxi = max(Counter([a.score for a in alns]))
-    aln = [a for a in alns if a.score == maxi][0]
-    ab['signal_peptide_id'] = aln.target_id
-    ab['signal_peptide_score'] = maxi
-    ab['signal_peptide_sequence'] = aln.query.sequence[aln.query_begin:]
-    ab['signal_peptide_sequence_aa'] = dc.translate(aln.query.sequence[aln.query_begin:])
+# def assign5prime(ab):
+#     leaders = read_fasta('./refs/L.fasta')
+#     alns = alignment.semiglobal_alignment(query=ab['leader'], targets=leaders)
+#     maxi = max(Counter([a.score for a in alns]))
+#     aln = [a for a in alns if a.score == maxi][0]
+#     ab['signal_peptide_id'] = aln.target_id
+#     ab['signal_peptide_score'] = maxi
+#     ab['signal_peptide_sequence'] = aln.query.sequence[aln.query_begin:]
+#     ab['signal_peptide_sequence_aa'] = dc.translate(aln.query.sequence[aln.query_begin:])
 
-    ab['5-UTR'] = aln.query.sequence[:aln.query_begin]
+#     ab['5-UTR'] = aln.query.sequence[:aln.query_begin]
     
-    part1 = read_fasta('./refs/L1.fasta')
-    alns = alignment.semiglobal_alignment(query=ab['signal_peptide_sequence'], targets=part1)
-    maxi = max(Counter([a.score for a in alns]))
-    aln = [a for a in alns if a.score == maxi][0]
-    ab['L_part_1'] = aln.query.sequence[:aln.target_end+1]
-    ab['L_part_2'] = aln.query.sequence[aln.target_end+1:]
+#     part1 = read_fasta('./refs/L1.fasta')
+#     alns = alignment.semiglobal_alignment(query=ab['signal_peptide_sequence'], targets=part1)
+#     maxi = max(Counter([a.score for a in alns]))
+#     aln = [a for a in alns if a.score == maxi][0]
+#     ab['L_part_1'] = aln.query.sequence[:aln.target_end+1]
+#     ab['L_part_2'] = aln.query.sequence[aln.target_end+1:]
     
-    return ab
+#     return ab
 
 
-def assign3prime(ab):
-    ab = assign_ch1(ab)
-    if ab['locus'] != 'IGH':
-        return ab
-    else:
-        ab = assign_ch2(ab)
-        ab = assign_ch3(ab)
-        if any([(ab['c_call'].startswith('IgE')), (ab['c_call'].startswith('IgM'))]):
-            ab = assign_ch4(ab)
-        ab = assign_h(ab)
-        return ab
+# def assign3prime(ab):
+#     ab = assign_ch1(ab)
+#     if ab['locus'] != 'IGH':
+#         return ab
+#     else:
+#         ab = assign_ch2(ab)
+#         ab = assign_ch3(ab)
+#         if any([(ab['c_call'].startswith('IgE')), (ab['c_call'].startswith('IgM'))]):
+#             ab = assign_ch4(ab)
+#         ab = assign_h(ab)
+#         return ab
 
 
-def assign_ch1(ab):
-    query = ab['trailer']
-    if ab['locus'] == 'IGH':
-        ch1 = read_fasta('./refs/CH1.fasta')
-    else:
-        ch1 = read_fasta('./refs/CL1.fasta')
-    alns = alignment.semiglobal_alignment(query=query, targets=ch1)
-    maxi = max(Counter([a.score for a in alns]))
-    aln = [a for a in alns if a.score == maxi][0]
-    ab['ch1'] = aln.target_id
-    ab['ch1_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
-    ab['ch1_sequence_aa'] = dc.translate(ab.sequence[-1:]+ab['ch1_sequence'])
-    return ab
+# def assign_ch1(ab):
+#     query = ab['trailer']
+#     if ab['locus'] == 'IGH':
+#         ch1 = read_fasta('./refs/CH1.fasta')
+#     else:
+#         ch1 = read_fasta('./refs/CL1.fasta')
+#     alns = alignment.semiglobal_alignment(query=query, targets=ch1)
+#     maxi = max(Counter([a.score for a in alns]))
+#     aln = [a for a in alns if a.score == maxi][0]
+#     ab['ch1'] = aln.target_id
+#     ab['ch1_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+#     ab['ch1_sequence_aa'] = dc.translate(ab.sequence[-1:]+ab['ch1_sequence'])
+#     return ab
 
 
-def assign_ch2(ab):
-    query = ab['trailer'].split(ab['ch1_sequence'])[-1]
-    if len(query) < 260:
-        return ab
-    ch2 = read_fasta('./refs/CH2.fasta')
-    alns = alignment.semiglobal_alignment(query=query, targets=ch2)
-    maxi = max(Counter([a.score for a in alns]))
-    aln = [a for a in alns if a.score == maxi][0]
-    ab['ch2'] = aln.target_id
-    ab['ch2_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
-    ab['ch2_sequence_aa'] = dc.translate(ab['ch1_sequence'][-1:]+ab['ch2_sequence'])
-    return ab
+# def assign_ch2(ab):
+#     query = ab['trailer'].split(ab['ch1_sequence'])[-1]
+#     if len(query) < 260:
+#         return ab
+#     ch2 = read_fasta('./refs/CH2.fasta')
+#     alns = alignment.semiglobal_alignment(query=query, targets=ch2)
+#     maxi = max(Counter([a.score for a in alns]))
+#     aln = [a for a in alns if a.score == maxi][0]
+#     ab['ch2'] = aln.target_id
+#     ab['ch2_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+#     ab['ch2_sequence_aa'] = dc.translate(ab['ch1_sequence'][-1:]+ab['ch2_sequence'])
+#     return ab
 
 
-def assign_ch3(ab):
-    try:
-        query = ab['trailer'].split(ab['ch2_sequence'])[1]
-        if len(query) < 260:
-            return ab
-        ch3 = read_fasta('./refs/CH3.fasta')
-        alns = alignment.semiglobal_alignment(query=query, targets=ch3)
-        maxi = max(Counter([a.score for a in alns]))
-        aln = [a for a in alns if a.score == maxi][0]
-        ab['ch3'] = aln.target_id
-        ab['ch3_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
-        ab['ch3_sequence_aa'] = dc.translate(ab['ch2_sequence'][-2:]+ab['ch3_sequence'])
-        return ab
-    except:
-        return ab
+# def assign_ch3(ab):
+#     try:
+#         query = ab['trailer'].split(ab['ch2_sequence'])[1]
+#         if len(query) < 260:
+#             return ab
+#         ch3 = read_fasta('./refs/CH3.fasta')
+#         alns = alignment.semiglobal_alignment(query=query, targets=ch3)
+#         maxi = max(Counter([a.score for a in alns]))
+#         aln = [a for a in alns if a.score == maxi][0]
+#         ab['ch3'] = aln.target_id
+#         ab['ch3_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+#         ab['ch3_sequence_aa'] = dc.translate(ab['ch2_sequence'][-2:]+ab['ch3_sequence'])
+#         return ab
+#     except:
+#         return ab
 
 
-def assign_ch4(ab):
-    query = ab['trailer'].split(ab['ch3_sequence'])[1]
-    ch4 = read_fasta('./refs/CH4.fasta')
-    alns = alignment.semiglobal_alignment(query=query, targets=ch4)
-    maxi = max(Counter([a.score for a in alns]))
-    aln = [a for a in alns if a.score == maxi][0]
-    ab['ch4'] = aln.target_id
-    ab['ch4_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
-    ab['ch4_sequence_aa'] = dc.translate(ab['ch4_sequence'])
-    return ab
+# def assign_ch4(ab):
+#     query = ab['trailer'].split(ab['ch3_sequence'])[1]
+#     ch4 = read_fasta('./refs/CH4.fasta')
+#     alns = alignment.semiglobal_alignment(query=query, targets=ch4)
+#     maxi = max(Counter([a.score for a in alns]))
+#     aln = [a for a in alns if a.score == maxi][0]
+#     ab['ch4'] = aln.target_id
+#     ab['ch4_sequence'] = aln.aligned_query[:aln.target_end+1].replace('-','')
+#     ab['ch4_sequence_aa'] = dc.translate(ab['ch4_sequence'])
+#     return ab
 
 
-def assign_h(ab):
-    query = ab['trailer']
-    h = read_fasta('./refs/H.fasta')
-    alns = alignment.semiglobal_alignment(query=query, targets=h)
-    maxi = max(Counter([a.score for a in alns]))
-    aln = [a for a in alns if a.score == maxi][0]
-    ab['hinge'] = aln.target_id
-    ab['hinge_sequence'] = aln.aligned_query[aln.query_begin:aln.query_end+1].replace('-','')
-    ab['hinge_sequence_aa'] = dc.translate(aln.aligned_query[aln.query_begin-1]+ab['hinge_sequence'],)
-    return ab
+# def assign_h(ab):
+#     query = ab['trailer']
+#     h = read_fasta('./refs/H.fasta')
+#     alns = alignment.semiglobal_alignment(query=query, targets=h)
+#     maxi = max(Counter([a.score for a in alns]))
+#     aln = [a for a in alns if a.score == maxi][0]
+#     ab['hinge'] = aln.target_id
+#     ab['hinge_sequence'] = aln.aligned_query[aln.query_begin:aln.query_end+1].replace('-','')
+#     ab['hinge_sequence_aa'] = dc.translate(aln.aligned_query[aln.query_begin-1]+ab['hinge_sequence'],)
+#     return ab
 
 
-def abnotator(ab, debug=False, ):
-    try:
-        leader, trailer = ab['sequence_input'].split(ab.sequence)
-        ab['leader'] = leader
-        ab['trailer'] = trailer
-    except:
-        ab['leader'] = None
-        ab['trailer'] = None
-        return ab
+# def abnotator(ab, debug=False, ):
+#     try:
+#         leader, trailer = ab['sequence_input'].split(ab.sequence)
+#         ab['leader'] = leader
+#         ab['trailer'] = trailer
+#     except:
+#         ab['leader'] = None
+#         ab['trailer'] = None
+#         return ab
 
-    ab = assign5prime(ab)
-    ab = assign3prime(ab)
+#     ab = assign5prime(ab)
+#     ab = assign3prime(ab)
   
-    return ab
+#     return ab
 
 
-def single_humanize(ab, temp:float = 1.25, debug=False, ):
+# def single_humanize(ab, temp:float = 1.25, debug=False, ):
 
-    h_tool = HumanizationTool()
-    original = ab['sequence']
+#     h_tool = HumanizationTool()
+#     original = ab['sequence']
 
-    score, mutations, humanized = h_tool.suggest_mutations(original, 
-                                                     excluded_positions = [],
-                                                     s_thresh = knob,
-                                                    )
-    # aln = alignment.semiglobal_alignment(original, humanized)
-    percent_change = round(len(mutations)/len(humanized) * 100, 2)
+#     score, mutations, humanized = h_tool.suggest_mutations(original, 
+#                                                      excluded_positions = [],
+#                                                      s_thresh = knob,
+#                                                     )
+#     # aln = alignment.semiglobal_alignment(original, humanized)
+#     percent_change = round(len(mutations)/len(humanized) * 100, 2)
 
-    ab['humanized'] = humanized
-    ab['humanization_score'] = score
-    ab['humanization_mutations'] = mutations
-    ab['humanization_percent_change'] = percent_change
+#     ab['humanized'] = humanized
+#     ab['humanization_score'] = score
+#     ab['humanization_mutations'] = mutations
+#     ab['humanization_percent_change'] = percent_change
 
-    return ab
+#     return ab
 
 
-def multi_humanize(sequence, oracles, iterations, seq_per_it, final_output, mutables_fwr, mutables_cdr, debug=False, ):
+# def multi_humanize(sequence, oracles, iterations, seq_per_it, final_output, mutables_fwr, mutables_cdr, debug=False, ):
 
-    return sequence
+#     return sequence
 
 
 
