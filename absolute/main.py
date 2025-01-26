@@ -182,6 +182,12 @@ schema = make_executable_schema(type_defs, query)
 #############################################################################################################
 
 
+def billing(user, token, app):
+    with open(f'/home/serveradmin/Apps/fabulous/billing/billing_{user}.csv', 'a') as f:
+        f.write(f"{user}\t{token}\t{app}\t{datetime.datetime.now()}\n")
+    return None
+
+
 def preprocessing(sequence_id, raw_input, species="human", debug=False):
     """Pre-processes the input to figure out input type (raw unformatted, single-FASTA or multi-FASTA) and the origin (nucleotides/DNA or amino-acids/proteins)
     Formats the input into a suitable format (a list of FabulousAb dataclass instances) for the downstream analysis"""
@@ -555,6 +561,8 @@ def id():
         sequence_id = data.get('sequence_id')
         sequence = data.get('sequence')
         species = data.get('species', 'human')  # Default to "human" if not provided
+        userid = data.get('userid')
+        authtoken = data.get('authtoken')
     else:
         # For GET requests, use query parameters
         sequence_id = request.args.get('sequence_id')
@@ -576,9 +584,10 @@ def id():
 
     # Return the results in a consistent format
     if result:
+        billing(user=userid, token=authtoken, app='id')
         return jsonify({"results":dict(result)})
     else:
-        return jsonify({"error": "No results found"}), 400
+        return jsonify({"error": "No results found (Fab'ulous Id App)"}), 400
     
 
 @app.route('/ids', methods=['POST'])
@@ -591,6 +600,8 @@ def ids():
         sequence_id = obj.get('sequence_id')
         sequence = obj.get('sequence')
         species = obj.get('species', 'human')
+        userid = data.get('userid')
+        authtoken = data.get('authtoken')
         ab = preprocessing(sequence_id, sequence, species=species)
         preprocessed.append(ab)
 
@@ -601,30 +612,46 @@ def ids():
             ab = antibody_identification(_item, debug=False)
             results.append(ab)
 
-    return jsonify(results)
+    if results != []:
+        billing(user=userid, token=authtoken, app='ids')
+        return jsonify(results)
+    else:
+        return jsonify({"error": "No results found (Fab'ulous Ids App)"}), 400
 
 
 @app.route('/optimize', methods=['POST'])
 def optimize():
-    data = request.get_json() or request.form
+    raw = request.get_json() or request.form
+    header, data = raw
     ab, species = data
+    userid = header.get('userid')
+    authtoken = header.get('authtoken')
     ab = optimize(ab, species=species, )
+    billing(user=userid, token=authtoken, app='optimize')
     return ab
 
 
 @app.route('/clone', methods=['POST'])
 def clone():
-    data = request.get_json() or request.form
+    raw = request.get_json() or request.form
+    header, data = raw
     ab, vector = data
+    userid = header.get('userid')
+    authtoken = header.get('authtoken')
     ab = clone(ab, vector)
+    billing(user=userid, token=authtoken, app='clone')
     return ab
 
 
 @app.route('/number', methods=['POST'])
 def number():
-    data = request.get_json() or request.form
+    raw = request.get_json() or request.form
+    header, data = raw
     ab, numbering_scheme = data
+    userid = header.get('userid')
+    authtoken = header.get('authtoken')
     ab = numbering(ab, numbering_scheme)
+    billing(user=userid, token=authtoken, app='numbering')
     return ab
 
 
@@ -652,12 +679,14 @@ def phylogeny():
 
 @app.route('/humanize', methods=['POST'])
 def _humanize():
-    data = request.get_json() or request.form
+    raw = request.get_json() or request.form
+    header, data = raw
     ab = data.get('antibody')
     knob = data.get('knob', 1.25)
-
+    userid = header.get('userid')
+    authtoken = header.get('authtoken')
     ab = humanize(ab, knob=knob)
-
+    billing(user=userid, token=authtoken, app='humanize')
     return ab
 
 
