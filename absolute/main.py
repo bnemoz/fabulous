@@ -23,7 +23,8 @@ from enum import Enum
 
 # import abutils
 
-from absolute import preprocessing, antibody_identification, optimize, clone, numbering, abnotator, single_humanize, multi_humanize, get_clusters, get_phylogeny, build_tree
+from absolute import preprocessing, antibody_identification, optimize, clone, numbering, abnotator, get_clusters, get_phylogeny, build_tree
+from humanize import single_humanize, multi_humanize
 from billing import billing, get_bill, authenticate
 
 
@@ -351,16 +352,19 @@ def humanize():
         ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
         ab, errors = antibody_identification(ab, debug=debug)
 
+        keys_to_keep = ['sequence_id', 'sequence', 'humanized', 'humanization_score', 'humanization_mutations', 'humanization_percent_change']
+        
         # Perform single humanization
         try:
             ab = single_humanize(ab=ab, temp=temp, debug=debug)
+            response = {k: ab[k] for k in keys_to_keep}
             billing(user=userid, token=authtoken, app='Humanize (single)')
         except Exception as e:
             return jsonify({"Single Humanization App error": str(e)}), 500
         if debug:
-            return jsonify({"result": ab.annotations, "errors": errors}), 200
+            return jsonify({"result": response, "errors": errors}), 200
         else:
-            return jsonify({"result": ab.annotations}), 200
+            return jsonify({"result": response}), 200
 
     elif model == "multi":
         # Extract relevant data for multi model

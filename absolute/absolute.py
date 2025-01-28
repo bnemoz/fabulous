@@ -32,7 +32,7 @@ from abutils.io import read_fasta
 # import antpack
 from antpack import SingleChainAnnotator
 # from antpack import PairedChainAnnotator
-from antpack import HumanizationTool
+# from antpack import HumanizationTool
 
 import subprocess as sp
 
@@ -450,44 +450,6 @@ def abnotator(ab, debug=False, ):
     ab = assign3prime(ab)
   
     return ab
-
-
-def single_humanize(ab, temp:float = 1.25, debug=False, ):
-
-    h_tool = HumanizationTool()
-    original = ab['sequence']
-
-    try:
-        score, mutations, humanized = h_tool.suggest_mutations(original, 
-                                                        excluded_positions = [],
-                                                        s_thresh = float(temp),
-                                                        )
-        # aln = alignment.semiglobal_alignment(original, humanized)
-        percent_change = round(len(mutations)/len(humanized) * 100, 2)
-
-        ab['humanized'] = humanized
-        ab['humanization_score'] = score
-        ab['humanization_mutations'] = mutations
-        ab['humanization_percent_change'] = percent_change
-
-        if debug:
-            print(f"Score: {score}")
-            print(f"Percent change: {percent_change}")
-    except Exception as e:
-        ab['humanized'] = None
-        ab['humanization_score'] = None
-        ab['humanization_mutations'] = None
-        ab['humanization_percent_change'] = None
-        if debug:
-            print(e)
-            
-    return ab
-
-
-
-def multi_humanize(sequence, oracles, iterations, seq_per_it, final_output, mutables_fwr, mutables_cdr, debug=False, ):
-
-    return sequence
 
 
 
