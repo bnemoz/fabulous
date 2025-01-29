@@ -240,7 +240,7 @@ def optimize(ab, species='human', debug=False, ):
     sequence = ab.sequence
 
     species_dict = {'human':'h_sapiens', 'mouse':'m_musculus', }
-    species = species_dict[species]
+    species = species_dict[species.lower()]
 
     optimize = dc.DnaOptimizationProblem(sequence=sequence, constraints=[dc.EnforceTranslation(), 
                                                         dc.EnforceGCContent(maxi=0.56), 
