@@ -277,7 +277,8 @@ def optimize(ab, species='human', debug=False, ):
         ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
 
         ab['optimization_timestamp'] = str(datetime.datetime.now())
-
+        errors = []
+        
     except Exception as e:
         if debug:
             print("Optimization failed: error", e)
