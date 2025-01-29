@@ -267,11 +267,11 @@ def optimize():
     authtoken = data.get('authtoken')
     debug = data.get('debug', False)
     sequence_id = data.get('sequence_id')
-    sequence = data.get('sequences')
+    sequence = data.get('sequence')
     species = data.get('species', 'human')  # Default species
 
     if not sequence or not isinstance(sequence, str):
-        return jsonify({"error": "Invalid or missing 'sequences' field"}), 400
+        return jsonify({"error": "Invalid or missing 'sequence' field"}), 400
 
     if not authenticate(userid, authtoken):
         return jsonify({"Authentification App error": "Invalid or missing authentication"}), 400
