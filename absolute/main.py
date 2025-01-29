@@ -258,7 +258,7 @@ def ids():
 
 
 @app.route('/optimize', methods=['POST'])
-def optimize():
+def optimizing():
     data = request.get_json()
     if not data:
         return jsonify({"error": "Invalid or missing JSON payload"}), 400
