@@ -186,6 +186,23 @@ def cleaner(sequence, pure_DNA=False, ):
         if pure_DNA:
             _seq = _seq.replace("U", "T")
         return _seq.upper()
+    
+
+def enforce_modulo3(dna_seq: str) -> str:
+    """
+    Adjusts a DNA sequence to ensure its length is a multiple of 3 by 
+    removing nucleotides from the end if necessary.
+
+    Parameters:
+        dna_seq (str): The input DNA sequence.
+
+    Returns:
+        str: The adjusted DNA sequence with length as a multiple of 3.
+    """
+    remainder = len(dna_seq) % 3
+    if remainder:
+        dna_seq = dna_seq[:-remainder]  # Remove the last 'remainder' nucleotides
+    return dna_seq
 
 
 
@@ -237,7 +254,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
 
 
 def optimize(ab, species='human', debug=False, ):
-    sequence = ab.sequence
+    sequence = enforce_modulo3(ab.sequence)
 
     species_dict = {'human':'h_sapiens', 'mouse':'m_musculus', }
     species = species_dict[species.lower()]
@@ -249,17 +266,24 @@ def optimize(ab, species='human', debug=False, ):
                                             logger=None,
                                             objectives=[dc.CodonOptimize(species=species)])
     optimize.resolve_constraints(final_check=True)
-    optimize.optimize()
 
-    ab['optimized_vdj'] = optimize.sequence
-    ab['optimized_species'] = species
-    ab['optimizations'] = optimize.sequence_edits_as_array()
-    ab['optimizations_count'] = optimize.number_of_edits()
-    ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
+    try:
+        optimize.optimize()
+        
+        ab['optimized_vdj'] = optimize.sequence
+        ab['optimized_species'] = species
+        ab['optimizations'] = optimize.sequence_edits_as_array()
+        ab['optimizations_count'] = optimize.number_of_edits()
+        ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
 
-    ab['optimization_timestamp'] = str(datetime.datetime.now())
+        ab['optimization_timestamp'] = str(datetime.datetime.now())
 
-    return ab
+    except Exception as e:
+        if debug:
+            print("Optimization failed: error", e)
+            errors = [f"Optimization failed: error {e}"]
+
+    return ab, errors
 
 
 def clone(ab, debug=False, ):
