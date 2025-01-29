@@ -284,7 +284,7 @@ def optimizing():
 
     keys_to_keep = ['sequence_id', 'user_input', 'optimized_vdj', 'optimizations', 'optimizations_count', 'optimized_gc_content', 'optimization_timestamp']
     response = {k: ab[k] for k in keys_to_keep}
-
+    print(response)
     billing(user=userid, token=authtoken, app='Optimize')
 
     if errors:
@@ -292,7 +292,7 @@ def optimizing():
     if debug:
         return jsonify({"result": response, "errors": errors}), 200
     else:
-        return jsonify({"result": ab}), 200
+        return jsonify({"result": response}), 200
 
 
 
