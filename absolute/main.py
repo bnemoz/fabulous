@@ -276,8 +276,10 @@ def optimizing():
     if not authenticate(userid, authtoken):
         return jsonify({"Authentification App error": "Invalid or missing authentication"}), 400
 
-    ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
+    preprocessed = preprocessing(sequence_id, sequence, species=species, debug=debug)
+    ab = antibody_identification(preprocessed, debug=debug)
     ab, errors = optimize(ab, species=species, debug=debug)
+    
     keys_to_keep = ['sequence_id', 'user_input', 'optimized_vdj', 'optimizations', 'optimizations_count', 'optimized_gc_content', 'optimization_timestamp']
     response = {k: ab[k] for k in keys_to_keep}
 
