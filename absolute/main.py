@@ -217,6 +217,9 @@ def ids():
     if not sequences or not isinstance(sequences, dict):
         return jsonify({"error": "Invalid or missing 'sequences' field"}), 400
 
+    if not authenticate(userid, authtoken):
+        return jsonify({"Authentification App error": "Invalid or missing authentication"}), 400
+
     results = {}
     errors = []
     for seq_id, seq_data in sequences.items():
@@ -256,14 +259,36 @@ def ids():
 
 @app.route('/optimize', methods=['POST'])
 def optimize():
-    raw = request.get_json() or request.form
-    header, data = raw
-    ab, species = data
-    userid = header.get('userid')
-    authtoken = header.get('authtoken')
-    ab = optimize(ab, species=species, )
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON payload"}), 400
+
+    userid = data.get('userid')
+    authtoken = data.get('authtoken')
+    debug = data.get('debug', False)
+    sequence_id = data.get('sequence_id')
+    sequence = data.get('sequences')
+    species = data.get('species', 'human')  # Default species
+
+    if not sequence or not isinstance(sequence, str):
+        return jsonify({"error": "Invalid or missing 'sequences' field"}), 400
+
+    if not authenticate(userid, authtoken):
+        return jsonify({"Authentification App error": "Invalid or missing authentication"}), 400
+
+    ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
+    ab, errors = optimize(ab, species=species, debug=debug)
+    keys_to_keep = ['sequence_id', 'user_input', 'optimized_vdj', 'optimizations', 'optimizations_count', 'optimized_gc_content', 'optimization_timestamp']
+    response = {k: ab[k] for k in keys_to_keep}
+
     billing(user=userid, token=authtoken, app='Optimize')
-    return ab
+
+    if errors:
+        return jsonify({"errors": errors}), 200
+    if debug:
+        return jsonify({"result": response, "errors": errors}), 200
+    else:
+        return jsonify({"result": ab}), 200
 
 
 
@@ -325,6 +350,14 @@ def tree():
 
 
 
+# @app.route('/stabilize', methods=['POST'])
+# def stabilize():
+    # data = request.get_json() or request.form
+    # stabilized = stabilize(data, )
+    # return stabilized
+
+
+
 @app.route('/humanize', methods=['POST'])
 def humanize():
     # Parse the input payload
@@ -352,8 +385,8 @@ def humanize():
         ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
         ab, errors = antibody_identification(ab, debug=debug)
 
-        keys_to_keep = ['sequence_id', 'sequence', 'humanized', 'humanization_score', 'humanization_mutations', 'humanization_percent_change']
-        
+        keys_to_keep = ['sequence_id', 'user_input', 'humanized', 'humanization_score', 'humanization_mutations', 'humanization_percent_change']
+
         # Perform single humanization
         try:
             ab = single_humanize(ab=ab, temp=temp, debug=debug)
@@ -361,7 +394,8 @@ def humanize():
             billing(user=userid, token=authtoken, app='Humanize (single)')
         except Exception as e:
             return jsonify({"Single Humanization App error": str(e)}), 500
-        if debug:
+        
+        if debug == True:
             return jsonify({"result": response, "errors": errors}), 200
         else:
             return jsonify({"result": response}), 200
