@@ -273,7 +273,7 @@ def optimize(ab, species='human', debug=False, ):
         ab['optimized_vdj'] = optimize.sequence
         ab['optimized_species'] = species
         ab['optimizations'] = optimize.sequence_edits_as_array().tolist()
-        ab['optimizations_count'] = str(optimize.number_of_edits())
+        ab['optimizations_count'] = int(optimize.number_of_edits())
         ab['optimized_gc_content'] = (optimize.sequence.count('G') + optimize.sequence.count('C'))/len(optimize.sequence)*100
 
         ab['optimization_timestamp'] = str(datetime.datetime.now())
