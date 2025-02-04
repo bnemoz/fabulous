@@ -296,14 +296,24 @@ def optimizing():
 
 @app.route('/clone', methods=['POST'])
 def clone():
-    raw = request.get_json() or request.form
-    header, data = raw
-    ab, vector = data
-    userid = header.get('userid')
-    authtoken = header.get('authtoken')
-    ab = clone(ab, vector)
+    payload = request.get_json() or request.form
+
+    userid = payload.get('userid')
+    authtoken = payload.get('authtoken')
+    debug = payload.get('debug', False)
+
+    if not authenticate(userid, authtoken):
+        return jsonify({"Authentification App error": "Invalid or missing authentication"}), 400
+
+    ab, vector = payload.get('sequence'), payload.get('vector')
+    ab, error = clone(ab=ab, vector=vector, debug=debug)
+
     billing(user=userid, token=authtoken, app='Clone')
-    return ab
+
+    if debug:
+        return jsonify({"result": ab, "errors": error}), 200
+    else:
+        return ab
 
 
 

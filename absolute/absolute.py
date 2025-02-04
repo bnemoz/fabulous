@@ -287,9 +287,41 @@ def optimize(ab, species='human', debug=False, ):
     return ab, errors
 
 
-def clone(ab, debug=False, ):
-    # To-Do
-    return ab
+def clone(ab, vector, debug=False, ):
+    vector_type = vector.get('type')
+
+    if ab['optimized_vdj'] is not None:
+        input_seq = ab['optimized_vdj']
+    else:
+        input_seq = ab['sequence']
+        errors = ["Warning: No optimized sequence available. Using the original sequence for cloning"]
+
+    if not vector_type == "custom":
+        if ab['locus'] == 'IGH':
+            clonable = Sequence((oh_5['IGH'] + input_seq + oh_3['IGH']), id=ab.id)
+            ab['clonable'] = clonable.sequence
+        elif ab['locus'] == 'IGK':
+            clonable = Sequence((oh_5['IGK'] + input_seq + oh_3['IGK']), id=ab.id)
+            ab['clonable'] = clonable.sequence
+        elif ab['locus'] == 'IGL':
+            clonable = Sequence((oh_5['IGL'] + input_seq + oh_3['IGL']), id=ab.id)
+            ab['clonable'] = clonable.sequence
+
+    else:
+        vector_seq = vector.get('sequence')
+        vector_name = vector.get('sequence_id')
+        vector_5oh = vector.get('5prime_overhang')
+        vector_3oh = vector.get('3prime_overhang')
+
+        clonable = Sequence((vector_5oh + input_seq + vector_3oh), id=str(ab.id+"_"+vector_name))
+        plasmid = Sequence(vector_seq+clonable, id=vector_name)
+        ab['clonable'] = clonable.sequence
+        ab['plasmid'] = plasmid.sequence
+
+    if debug:
+        return ab, errors
+    else:
+        return ab, {}
 
 
 def numbering(ab, scheme, algo='anarci', debug=False, ):
