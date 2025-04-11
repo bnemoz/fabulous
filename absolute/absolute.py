@@ -234,7 +234,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
         ab['chain'] = "Unknown"
         errors.append("Chain could not be determined")
     try:
-        ab['isotype'] = isotypes[ab['c_call']] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
+        ab['isotype'] = isotypes[ab['c_call'].split('*')[0]] if ab['locus'] == 'IGH' else isotypes[ab['locus']]
     except:
         ab['isotype'] = "Unknwon"
         errors.append("Isotype could not be determined")
