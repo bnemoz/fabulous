@@ -25,7 +25,8 @@ import dnachisel as dc
 
 import abstar
 import abutils
-from abutils import Sequence, alignment
+from abutils import Sequence
+from abutils.tools import alignment
 from abutils.io import read_fasta
 # from abutils.io import read_airr, list_files
 
