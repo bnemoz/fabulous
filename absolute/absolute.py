@@ -23,6 +23,8 @@ import numpy as np
 # # from Bio.Seq import Seq
 import dnachisel as dc
 
+from .genbank import create_gb_from_ab
+
 import abstar
 import abutils
 from abutils import Sequence
@@ -512,6 +514,15 @@ def abnotator(ab, debug=False, ):
   
     return ab
 
+
+def make_gb_file(ab, debug=False, ):
+    """Creates a GenBank file from the antibody sequence and annotations."""
+
+    to_file = f'/tmp/{generate_random_label(16)}.gb'
+
+    gb = create_gb_from_ab(ab, to_file=to_file)
+
+    return gb
 
 
 def get_clusters(data):
