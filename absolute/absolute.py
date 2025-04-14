@@ -23,7 +23,7 @@ import numpy as np
 # # from Bio.Seq import Seq
 import dnachisel as dc
 
-from .genbank import create_gb_from_ab
+from genbank import create_gb_from_ab
 
 import abstar
 import abutils
