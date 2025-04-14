@@ -250,6 +250,19 @@ def antibody_identification(fabulous_ab, debug=False, ):
         ab['SHM_vj_aa'] = None
         errors.append("SHM VJ could not be calculated")
 
+    # Adding leader information if available
+
+    vdj_start = ab['sequence_oriented'].find(ab['fwr1'])
+    upstream = ab['sequence_oriented'][:vdj_start]
+    if upstream != "":
+        ab = assign5prime(ab)
+
+    # Adding trailing sequence annotations if available
+    vdj_stop = ab['sequence_oriented'].find(ab['fwr4']) + len(ab['fwr4'])
+    downstream = ab['sequence_oriented'][vdj_stop:]
+    if downstream != "":
+        ab = assign3prime(ab)
+
     return ab, errors
 
 
