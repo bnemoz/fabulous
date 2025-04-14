@@ -254,6 +254,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     try:
         vdj_start = ab['sequence_oriented'].find(ab['fwr1'])
         upstream = ab['sequence_oriented'][:vdj_start]
+        ab['leader'] = upstream
         if upstream != "":
             ab = assign5prime(ab)
     except:
@@ -263,6 +264,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     try:
         vdj_stop = ab['sequence_oriented'].find(ab['fwr4']) + len(ab['fwr4'])
         downstream = ab['sequence_oriented'][vdj_stop:]
+        ab['trailer'] = downstream
         if downstream != "":
             ab = assign3prime(ab)
     except:
