@@ -23,7 +23,7 @@ from enum import Enum
 
 # import abutils
 
-from absolute import preprocessing, antibody_identification, optimize, clone, numbering, abnotator, get_clusters, get_phylogeny, build_tree
+from absolute import preprocessing, antibody_identification, optimize, clone, numbering, abnotator, get_clusters, get_phylogeny, build_tree, make_gb_file
 from humanize import single_humanize, multi_humanize
 from billing import billing, get_bill, authenticate
 
@@ -474,6 +474,28 @@ def bill():
     except Exception as e:
         return jsonify({"Authentification App error": str(e)}), 500
 
+
+
+@app.route('/gb', methods=['POST'])
+def gb():
+     # Parse the input payload
+    payload = request.get_json() or request.form
+    if not payload:
+        return jsonify({"error": "Invalid or missing payload"}), 400
+
+    debug = payload.get('debug', False)
+    sequence_data = payload.get('sequence')
+
+    sequence_id = sequence_data.get('sequence_id')
+    sequence = sequence_data.get('sequence')
+    species = sequence_data.get('species', 'Mouse')  # Default species
+
+    ab = preprocessing(sequence_id, sequence, species=species, debug=debug)
+    ab, errors = antibody_identification(ab, debug=debug)
+
+    file = make_gb_file(ab, debug=debug)
+
+    return file, errors
 
 
 
