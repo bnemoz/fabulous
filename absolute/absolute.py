@@ -227,6 +227,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     # Adding Fab'ulous specific annotations to the AbStar output
     ab["input_type"] = fabulous_ab.input_type
     ab["user_input"] = fabulous_ab.raw_input
+    ab['v_gapps'] = ab['v_sequence_gapped'].count('.')
 
     try:
         ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
