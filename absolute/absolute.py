@@ -232,7 +232,7 @@ def antibody_identification(fabulous_ab, debug=False, ):
     ab['v_gaps'] = ab['v_sequence_gapped'].count('.')
     ab['sequence_vdjc_aa_gapped'] = gapper(ab['sequence_vdjc_aa'], ab['sequence_vdjc_gapped'])
     ab['sequence_aa_gapped'] = gapper(ab['sequence_aa'], ab['sequence_gapped'])
-    
+
     try:
         ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
     except:
@@ -543,10 +543,18 @@ def gapper(seq_aa_to_gap, seq_nt_gapped):
     seq_aa = str(seq_aa_to_gap)
     seq_nt = str(seq_nt_gapped)
 
-    nt_clean = seq_nt.replace('-', '').replace('.', '')
-    translated = str(dc.translate(nt_clean))
-    assert translated == seq_aa, f"Mismatch in AA translation:\nExpected: {seq_aa}\nGot: {translated}"
-    assert len(nt_clean) % 3 == 0, "Ungapped NT sequence length should be a multiple of 3"
+    try:
+        nt_clean = seq_nt.replace('-', '').replace('.', '')
+        translated = str(dc.translate(nt_clean))
+        if translated != seq_aa:
+            print(f"[Warning] Mismatch in AA translation:\nExpected: {seq_aa}\nGot:      {translated}")
+            return None
+        if len(nt_clean) % 3 != 0:
+            print(f"[Warning] Ungapped NT sequence length ({len(nt_clean)}) is not a multiple of 3")
+            return None
+    except Exception as e:
+        print(f"[Error] Unexpected error during AA gapping: {e}")
+        return None
 
     gapped_aa = ""
     i = 0  # index in ungapped AA sequence
@@ -558,10 +566,15 @@ def gapper(seq_aa_to_gap, seq_nt_gapped):
         if '.' in codon or '-' in codon:
             gapped_aa += '.'  # gap placeholder
         else:
-            gapped_aa += seq_aa[i]
-            i += 1
+            if i < len(seq_aa):
+                gapped_aa += seq_aa[i]
+                i += 1
+            else:
+                print(f"[Warning] Ran out of AA characters at codon {j}-{j+3}")
+                gapped_aa += '.'
 
     return gapped_aa
+
 
 
 def make_gb_file(ab, debug=False, ):
