@@ -424,6 +424,7 @@ def assign5prime(ab):
     ab['signal_peptide_score'] = maxi
     ab['signal_peptide_sequence'] = aln.query.sequence[aln.query_begin:]
     ab['signal_peptide_sequence_aa'] = dc.translate(aln.query.sequence[aln.query_begin:])
+    ab['signal_peptide_start'] = aln.query_begin
 
     ab['5-UTR'] = aln.query.sequence[:aln.query_begin]
     
