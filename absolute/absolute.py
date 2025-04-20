@@ -230,7 +230,9 @@ def antibody_identification(fabulous_ab, debug=False, ):
     ab["input_type"] = fabulous_ab.input_type
     ab["user_input"] = fabulous_ab.raw_input
     ab['v_gaps'] = ab['v_sequence_gapped'].count('.')
-
+    ab['sequence_vdjc_aa_gapped'] = gapper(ab['sequence_vdjc_aa'], ab['sequence_vdjc_gapped'])
+    ab['sequence_aa_gapped'] = gapper(ab['sequence_aa'], ab['sequence_gapped'])
+    
     try:
         ab['chain'] = 'Heavy' if ab['locus'] == 'IGH' else 'Kappa' if ab['locus'] == 'IGK' else 'Lambda' if ab['locus'] == 'IGL' else None
     except:
@@ -535,6 +537,31 @@ def abnotator(ab, debug=False, ):
     ab = assign3prime(ab)
   
     return ab
+
+def gapper(seq_aa_to_gap, seq_nt_gapped):
+    """Returns the gapped AA sequence matching the codon positions in a gapped NT sequence."""
+    seq_aa = str(seq_aa_to_gap)
+    seq_nt = str(seq_nt_gapped)
+
+    nt_clean = seq_nt.replace('-', '').replace('.', '')
+    translated = str(dc.translate(nt_clean))
+    assert translated == seq_aa, f"Mismatch in AA translation:\nExpected: {seq_aa}\nGot: {translated}"
+    assert len(nt_clean) % 3 == 0, "Ungapped NT sequence length should be a multiple of 3"
+
+    gapped_aa = ""
+    i = 0  # index in ungapped AA sequence
+
+    for j in range(0, len(seq_nt), 3):
+        codon = seq_nt[j:j+3]
+        if len(codon) < 3:
+            break
+        if '.' in codon or '-' in codon:
+            gapped_aa += '.'  # gap placeholder
+        else:
+            gapped_aa += seq_aa[i]
+            i += 1
+
+    return gapped_aa
 
 
 def make_gb_file(ab, debug=False, ):
