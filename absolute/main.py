@@ -507,6 +507,12 @@ def graphql_server():
     return jsonify(result), status_code
 
 
+@app.rout("/live", methods=["GET"])
+def live():
+    """Check if the server is alive."""
+    return jsonify({"status": "alive"}), 200
+
+
 
 #############################################################################################################
 #                                                                                                           #
